@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------------------
+# Licensed data. The ORBIS / Bankscope extract is licensed from Bureau van Dijk
+# per institution and may not be redistributed, so neither it nor anything
+# derived from it at bank level is committed. See DATA.md for how to reproduce
+# the extract with an institutional licence.
+#
+# The rule is simple: if a file has a bank_id column, it stays out.
+# ---------------------------------------------------------------------------
+data/micro/
+data/merged/
+data/engineered/
+data/individual_merges/merged/parquet_saves/micro_individual_merges/
+data/individual_merges/merged/csv_saves/micro_individual_merges/
+
+# Per-observation SHAP values are indexed by bank_id, so they are bank-level too.
+# The aggregated attribution tables in outputs/tables/ carry the published results.
+outputs/attribution/*/shap_values_*
+
+# ---------------------------------------------------------------------------
+# Notebook outputs. Cleared before commit; the generated figures and tables are
+# committed as files under outputs/ instead.
+# ---------------------------------------------------------------------------
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# ---------------------------------------------------------------------------
+# Python
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+.pytest_cache/
+
+# ---------------------------------------------------------------------------
+# OS and editor
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

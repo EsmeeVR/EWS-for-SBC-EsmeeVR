@@ -1,0 +1,10 @@
+Base,Year,Crisis n,Crisis median gap,Non-crisis n,Non-crisis median gap
+Contemporaneous panel,2010,9,-3.34,12,-1.04
+Contemporaneous panel,2011,9,-5.11,13,-2.19
+Contemporaneous panel,2012,9,-8.39,13,-2.95
+Modelling matrix / lag-1,2010,9,-0.86,12,1.28
+Modelling matrix / lag-1,2011,9,-3.34,12,-1.04
+Modelling matrix / lag-1,2012,9,-5.11,13,-2.19
+Modelling matrix / lag-2,2010,8,2.31,10,1.48
+Modelling matrix / lag-2,2011,9,-0.86,12,1.21
+Modelling matrix / lag-2,2012,9,-3.34,12,-1.04

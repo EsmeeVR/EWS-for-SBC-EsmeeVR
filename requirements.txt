@@ -1,0 +1,31 @@
+# Python 3.12
+#
+# Versions are those the thesis results were produced with. Later versions will
+# usually work, with two known exceptions noted in README.md: the pandas 2.2
+# groupby.apply change and the PEP 701 f-string syntax used in one cell.
+
+pandas==3.0.2
+numpy==2.4.4
+scipy==1.17.1
+scikit-learn==1.8.0
+statsmodels==0.14.6
+
+# gradient boosting and tuning
+xgboost==3.2.0
+lightgbm==4.6.0
+optuna==4.8.0
+
+# interpretability
+shap==0.51.0
+PyALE==1.2.0
+
+# io and plotting
+pyarrow==23.0.1
+openpyxl==3.1.5
+matplotlib==3.10.8
+seaborn==0.13.2
+
+# country code handling
+pycountry==26.2.16
+
+tqdm==4.67.3
