@@ -35,6 +35,21 @@ All notebooks (01-05, 11a-d, 12a/b including granularity, rt2a/b, 13a-d, 14, 15,
 - *H3, no micro-macro interaction*: every check found small interactions (including the missing pairs, A3), but the regime-split evidence rests on 5-10 crisis countries per regime (A56).
 - *RT1 and rt2 robustness*: RT1 gains reflect label alignment (A34); rt2 is not a valid anticipation test (A46).
 
+**Refit check of A2, A16, A17, A23, A24 (17-09-2026).** Models refitted with the published final hyperparameters (no re-tuning), baseline_t1, lag-1; the unchanged refit reproduces the published AUROC exactly (54/54 cells in 11a and in 11b). Mean AUROC over models, micro | macro | integrated:
+
+| Variant | 11a baseline | 11b extended |
+|---|---|---|
+| Published | 0.749 / 0.652 / 0.640 | 0.691 / 0.721 / 0.725 |
+| Without empty balance sheets (A16, 77 rows) | 0.762 / 0.667 / 0.645 | 0.698 / 0.717 / 0.716 |
+| Without group duplicate (A17, 3 rows) | 0.747 / 0.658 / 0.647 | 0.694 / 0.722 / 0.728 |
+| Without non-banks (A2, 18 rows) | 0.756 / 0.647 / 0.640 | 0.699 / 0.726 / 0.705 |
+| All three sample fixes | 0.763 / 0.657 / 0.643 | 0.698 / 0.722 / 0.702 |
+| Without `nfa_g` (A24) | n/a | 0.691 / 0.725 / 0.711 |
+| Without `credit_gap` (A23) | n/a | 0.691 / 0.691 / 0.715 |
+| Without both | n/a | 0.691 / 0.710 / 0.708 |
+
+Reading: in the baseline set, micro-only is the best configuration for all six models under every variant, and integrated stays below macro-only on average. In the extended set, the sample fixes move integrated from marginally above to below macro-only on average, and the per-model winner changes in up to one model (sample fixes) or three models (without `nfa_g`), with single cells moving by up to 0.14 AUROC. Model-level statements for the extended set are therefore fragile; the statement that integration is not systematically better holds in every variant. Removing the credit gap lowers macro-only by 0.030 on average, so it carries signal despite its coverage gap; most of the gain from extending the indicator set remains without the gap and NFA growth.
+
 **Implication for the rerun**: the High issues are design choices, not only code bugs. The target definition and evaluation scheme (A29, A46), the inference method (A33) and threshold selection (A1) need to be decided first; sample and code fixes (A2, A7, A16, A17, A23, A24, A3-A6, A9) follow.
 
 ---
