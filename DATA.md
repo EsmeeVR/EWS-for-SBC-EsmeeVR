@@ -33,15 +33,32 @@ so the published tables and figures can be inspected without the underlying pane
 ### Reproducing the extract
 
 Anyone with an institutional ORBIS licence can rebuild the input file. The pipeline expects it at
-`data/micro/raw/orbis_MICRO_all_EU25_m_EUR_1996_2017.xlsx`, with the financial data on **sheet 2**
-and company information on sheet 1.
+`data/micro/raw/orbis_MICRO_all_EU25_m_EUR_1996_2017.xlsx`. Its second sheet (`Results`) holds the
+identifier columns and the financial data; the first (`Search summary`) is the ORBIS export log.
 
-Selection:
+The extract used in the thesis is ORBIS data update 372001 (30/01/2026), exported 01/02/2026. ORBIS
+revises and backfills historical accounts between updates, and entities enter and leave the
+database, so a new extract with the same search will not return exactly the same 636 entities or
+values, and results built on it will differ from the published ones.
 
-- Banks in the 25 EU countries listed in `notebooks/02_macro_construction.ipynb` (`EU25_ISO3`)
+Search strategy, as recorded in the export log (steps combined with AND):
+
+1. NACE Rev. 2, primary codes only: **641 Monetary intermediation**
+2. Status: active and inactive companies (inactive kept to limit survivorship bias)
+3. Consolidation code: **C1** or **C2** (consolidated accounts)
+4. Country: the 25 EU countries listed in `notebooks/02_macro_construction.ipynb` (`EU25_ISO3`)
+
+Search options: exclude companies with no recent financial data; exclude public
+authorities, states and governments. This returned 636 entities.
+
+Export settings:
+
 - Annual data, 1996-2017
 - Values in **millions of EUR**
 - Consolidation code included as an identifier column
+
+NACE 641 is broader than "banks": see [Sample composition](#sample-composition-non-banks-in-the-extract)
+below.
 
 Identifier columns requested:
 
@@ -76,6 +93,50 @@ throughout the code is committed at `data/micro/dictionaries/variable_names_micr
 
 Note that `cr_impchg` is **impairment charges**, a level in EUR, not a change. The `chg` is short
 for charges. Being an unscaled flow it scales with bank size.
+
+### Sample composition: non-banks in the extract
+
+The NACE filter is not as tight as intended. Code 641 covers both **6411 Central banking** and
+**6419 Other monetary intermediation**, and ORBIS assigns 6411 to a number of Irish companies that
+are not banks. The problem was found after the thesis results were produced (checked 17-09-2026)
+and is disclosed here rather than corrected, because removing these entities means re-running every
+model.
+
+Of the 636 entities, 598 carry code 6419 and 36 carry 6411, with one each on 4618 and 6410.
+**34 of the 36 code-6411 entities are Irish**, so only 18 of the 52 Irish entities are coded 6419.
+The Irish 6411 group is mostly non-bank companies and holding companies (for example Glennon Bros.
+Holdings, Bimeda Holdings, Fitzpatricks Garage Group, Maiden Foods and Logicalis Ireland), plus a
+few foreign banks recorded under an Irish identifier (Aareal Bank AG, HSBC Bank PLC, The Royal Bank
+of Scotland N.V., Bankinter SA, Citco Bank Nederland NV). Outside Ireland the four non-6419 entities
+are two central banks (Bulgarian National Bank, Banque de France), a sugar trading company and an
+Italian holding company.
+
+These entities have no reported deposits, gross loans, equity, interbank liabilities or net
+interest income in ORBIS (100% missing for the Irish 6411 group), only total assets and profitability.
+The panel imputation (within-bank interpolation, then bank mean, then **year median**) therefore
+fills those lines with the cross-bank median for the year. In the modelling data they look like a
+median bank on the balance-sheet ratios while their total assets are in the tens of millions EUR.
+
+How much of the modelling data they make up. Only years up to 2012 enter any training or test set,
+which removes most of them, and all four non-6419 entities outside Ireland (their data start in 2014):
+
+| Panel | Irish 6411 rows (≤2012) | Crisis observations | Crisis observations in test years |
+|---|---|---|---|
+| Lag-1 (`11a`, `11b`) | 18 of 1,997 | 13 of 727 (1.8%) | 6 of 252 (2.4%) |
+| Lag-2 (`11c`, `11d`) | 12 of 1,616 | 10 of 687 (1.5%) | 4 of 230 (1.7%) |
+
+The 18 lag-1 rows belong to six entities, one of which (Aareal Bank AG) is a bank; the other five
+are non-banks. Every Irish observation in the 2010-2012 test years is a crisis observation, because
+the Laeven and Valencia Irish episode covers those years. The share is small, but it is concentrated
+in the positive class.
+
+The table covers `11a`-`11d`, where the rows enter all three configurations (the macro-only
+configuration there is also estimated on bank-year rows). `rt2a` and `rt2b` read the same panels and
+include the same entities; their counts are not tabulated. The country-level notebooks
+(`12a`/`12b`, macro-only and granularity) read no bank data and are not affected.
+
+Anyone rebuilding the extract should add a filter on NACE **6419** (or drop code 6411 after export)
+and check the remaining entities by name.
 
 ---
 
