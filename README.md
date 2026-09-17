@@ -123,8 +123,10 @@ pipeline deterministic across machines or library versions:
 
 Variation should be largest for the tuned tree ensembles and the MLP, and smallest for logistic
 regression (one hyperparameter, deterministic solver) and for fits that fall back to library
-defaults (see the next note). Its size has not been measured: the published results come from a
-single run per specification.
+defaults (see the note above). Its size has not been measured: the published results come from a
+single run per specification. MLP attributions in `13a`-`13d` are also stochastic: the
+KernelExplainer samples feature coalitions without a fixed seed, so recomputing SHAP for the same
+MLP moved mean |SHAP| per feature by up to 0.007.
 
 **The trial budget is not symmetric across models.** All six get 50 trials while tuning between one
 and six hyperparameters (LR 1, DT 2, MLP 3, RF 4, XGB 5, LGBM 6). This bounds what the attribution
@@ -132,6 +134,20 @@ results can claim.
 
 **Regularisation differs by model class.** Genuine L2 penalties apply to logistic regression (`C`)
 and the MLP (`alpha`) only. The tree models use complexity constraints instead.
+
+**Logistic regression is explained without its country dummies.** In `11a`-`11d` logistic
+regression includes country dummies (`get_dummies(country_iso, drop_first=True)`), and this is the
+LR in every performance table. The attribution notebooks `13a`-`13d` refit logistic regression on
+the micro and macro indicators only, with the same tuned `C`, and compute SHAP, ALE and the
+H-statistics on that model. This is deliberate: with more than twenty dummy columns, attribution
+would largely go to country identity, which is not an indicator and would obscure the micro/macro
+comparison the attribution exists for. The consequence has to be read with it. The explained LR is
+not the evaluated LR and performs clearly worse: in the baseline integrated configuration, the
+published `lr_no_dummies` runs score 0.07-0.32 AUROC below LR with dummies per test year, and the
+refitted attribution models checked in `11b` and `11d` score 0.09-0.26 below. LR attribution results
+describe how the indicators enter a model without country fixed effects. The other five model
+classes are refitted exactly as evaluated, apart from the hyperparameter file issue in Known
+issues 7.
 
 **Outliers are bounded, not winsorised.** A small number of ratios are set to `NaN` by hard domain
 bounds: equity ratio outside [0, 1.5], leverage outside [0, 100], loans-to-deposits above 5. Macro
@@ -189,6 +205,23 @@ changing published numbers.
    Every affected line carries a `KNOWN ISSUE` comment. It is left as run because correcting the
    pairs means re-running the H-statistic and partial dependence cells.
 
+   **Check on the missing pairs (17-09-2026).** The pairs that were left out (`inc_nii` and `inc_op`
+   against the five macro features in `11a`, `inc_nii` against them in `11b`) were computed with the
+   notebooks' own fitting and partial dependence code, for every model, test year and variant. One
+   stored pair was recomputed alongside as a control and matched exactly (H² difference 0). The
+   missing pairs show no more interaction than the stored ones:
+
+   | | Missing pairs: mean H² | max H² | Stored pairs: mean H² | max H² |
+   |---|---|---|---|---|
+   | `11a` baseline_t1 | 0.0007 | 0.027 | 0.0027 | 0.217 |
+   | `11a` rt1 | 0.0023 | 0.078 | 0.0082 | 0.144 |
+   | `11b` baseline_t1 | 0.0019 | 0.086 | 0.0064 | 0.508 |
+   | `11b` rt1 | 0.0032 | 0.038 | 0.0062 | 0.123 |
+
+   No missing-pair cell reaches H² ≥ 0.10. The largest values come from the MLP. The finding of
+   near-zero micro-macro interaction does not depend on the pair selection. For `11b` this check
+   uses the same hyperparameter file as the stored results, so it inherits issue 7.
+
 6. **The bank sample includes some non-banks, concentrated in Ireland.** The ORBIS search on NACE
    641 also admits code 6411 (central banking), which ORBIS assigns to a number of Irish companies
    that are not banks. Their deposit, loan and equity lines are missing and filled by the year
@@ -196,6 +229,61 @@ changing published numbers.
    crisis observations (1.8% for lag-1, 1.5% for lag-2). Counts, entities and the fix for a new
    extract are in [DATA.md](DATA.md#sample-composition-non-banks-in-the-extract). Not corrected,
    because it means re-running every bank-level model.
+
+   **Test-side sensitivity check (17-09-2026).** Without retraining, all entities not coded 6419
+   were dropped from the stored test predictions (the `proba_store` files `15_results` reads) and
+   AUROC and AUPRC were recomputed. That removes 1-3 test observations per test year, all of them
+   crisis observations. Recomputing on the full test sets reproduced the stored metrics exactly,
+   which confirms the rows were matched correctly.
+   - Across `11a`-`11d`, six models and three configurations (`baseline_t1`, mean over test years),
+     the largest change in any cell is 0.008 AUROC and 0.011 AUPRC. Averaged over models, changes
+     are within ±0.004 AUROC and ±0.005 AUPRC, except micro-only in `11b` (+0.007 AUROC).
+   - The ordering of micro-only, macro-only and integrated is unchanged in 24 of 24 model ×
+     specification cells on AUROC and 23 of 24 on AUPRC. The exception is the decision tree in `11a`,
+     where macro-only (0.380 to 0.369) and micro-only (0.376 to 0.374) swap on AUPRC.
+   - The narrowest AUROC gap in the main results, integrated against macro-only in `11b` (0.7248
+     against 0.7213, mean over models), stays the same size after exclusion (0.7254 against 0.7219).
+     Changes under the `rt1` variant are of the same size.
+
+   This covers evaluation only. The non-banks remain in every training window, and their effect on
+   the fitted models is unknown without re-running.
+
+7. **`13b` and `13d` refit models with pre-correction hyperparameters for two test years.** The
+   attribution notebooks load `best_params_log.pkl`. For `11b` and `11d` that file is the 02-06-2026
+   draft, tuned before the credit-gap HP filter was corrected. The published results use
+   `best_params_log_final.pkl`. The two files are identical for `11a`, and `11c` has only one file.
+   For `11b` and `11d` they differ in `baseline_t1`, macro-only and integrated, test years 2011 and
+   2012, for all six models (23 and 24 entries). `rt1` is unaffected. The data are the corrected data
+   in both cases. Only the hyperparameters differ, but the attribution models for those windows are
+   not the evaluated models. SHAP, ALE, partial dependence and H-statistics are all affected for
+   these windows, and so are the figures built on them in `14_visualisations` and `15_results`.
+
+   **Sensitivity check (16/17-09-2026).** The affected windows were refitted with both parameter files.
+   With the draft file the stored SHAP values are reproduced exactly (MLP to within its sampling
+   noise). With the final file the five non-LR models reproduce the published AUROC exactly (LR
+   differs by design, see the notes above). Share of total mean |SHAP| going to micro indicators,
+   integrated configuration, `baseline_t1` pooled over test years:
+
+   | Model | `11b` published | `11b` final params | `11d` published | `11d` final params |
+   |---|---|---|---|---|
+   | Decision tree | 1.2% | 1.9% | 0.3% | 1.4% |
+   | LightGBM | 3.7% | 6.0% | 9.4% | 3.9% |
+   | Random forest | 6.1% | 3.7% | 10.7% | 6.3% |
+   | XGBoost | 10.9% | 10.3% | 11.7% | 18.7% |
+   | MLP | 19.4% | 19.2% | 21.4% | 18.9% |
+   | Logistic regression | 15.2% | 14.8% | 15.7% | 16.8% |
+
+   In `11b` the effect is small: rank correlations of pooled feature importance between the two
+   runs are 0.92-1.00 and the top five features are nearly unchanged. In `11d` it is larger: micro
+   shares move by up to 7 percentage points, the decision tree's rank correlation is 0.64, and the
+   top feature changes for random forest (real GDP growth to FX reserves growth) and XGBoost (credit
+   growth to real GDP growth). Macro indicators take at least 78% of attribution in every model under
+   both parameter files, so the dominance of macro indicators in attribution does not depend on
+   the parameter file. Exact `11d` shares and rankings in the published figures should be read with
+   this in mind. After discussion with the supervisor, the published attribution outputs are kept as
+   they are and the issue is disclosed here. Outputs recomputed with the final file exist in the
+   original workspace (`outputs_11b_finalpkl`, `outputs_11d_finalpkl`) and agree with this check; they
+   are not part of this repository.
 
 ---
 
