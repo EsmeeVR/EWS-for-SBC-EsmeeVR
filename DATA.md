@@ -23,7 +23,6 @@ nor anything derived from it at bank level is committed here. Specifically exclu
 data/micro/                  the extract, the preclean and the clean bank panels
 data/merged/                 micro joined to macro and to the crisis label
 data/engineered/             the lagged modelling panels
-data/individual_merges/merged/*/micro_individual_merges/
 outputs/attribution/*/shap_values_*    per-observation SHAP, indexed by bank_id
 ```
 
@@ -98,9 +97,14 @@ for charges. Being an unscaled flow it scales with bank size.
 
 The NACE filter is not as tight as intended. Code 641 covers both **6411 Central banking** and
 **6419 Other monetary intermediation**, and ORBIS assigns 6411 to a number of Irish companies that
-are not banks. The problem was found after the thesis results were produced (checked 17-09-2026)
-and is disclosed here rather than corrected, because removing these entities means re-running every
-model.
+are not banks. The problem was found after the thesis results were produced (checked 17-09-2026).
+
+**Corrected for the 2026 rerun** (`01_micro_construction.ipynb`, section 4b): the pipeline now keeps
+NACE 6419 only, drops entities that report none of the five core balance-sheet items (deposits, gross
+loans, equity, interbank liabilities, net interest income) in any year, and drops six group entities
+whose operating bank is also in the extract. That removes 84 of the 579 entities with data (4,683 to
+4,405 bank-years). The variable selection is kept as published. The description below is of the
+extract as used for the thesis results; see `RERUN.md` for what the rerun changes.
 
 Of the 636 entities, 598 carry code 6419 and 36 carry 6411, with one each on 4618 and 6410.
 **34 of the 36 code-6411 entities are Irish**, so only 18 of the 52 Irish entities are coded 6419.
@@ -135,8 +139,8 @@ configuration there is also estimated on bank-year rows). `rt2a` and `rt2b` read
 include the same entities; their counts are not tabulated. The country-level notebooks
 (`12a`/`12b`, macro-only and granularity) read no bank data and are not affected.
 
-Anyone rebuilding the extract should add a filter on NACE **6419** (or drop code 6411 after export)
-and check the remaining entities by name.
+Anyone rebuilding the extract can keep the NACE 641 search: the filter in section 4b of
+`01_micro_construction.ipynb` applies the corrections. Check the remaining entities by name.
 
 ---
 

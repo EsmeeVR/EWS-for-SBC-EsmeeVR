@@ -1,7 +1,7 @@
 variable,missing_pct
 credit_gap,47.65
 credit_g,30.26
-nfa_g,30.09
+nfa_gdp,30.09
 FS.AST.PRVT.GD.ZS,25.91
 FM.AST.NFRG.CN,25.74
 reer_g,4.35
@@ -9,7 +9,8 @@ fx_g,4.35
 LUR,0.7
 NGDP_RPCH,0.35
 PCPIPCH,0.35
-RXF11FX_REVS,0.0
-BIS_REER,0.0
 BCA_NGDPD,0.0
 NGDPD,0.0
+RXF11FX_REVS,0.0
+BIS_REER,0.0
+credit_gap_missing,0.0
