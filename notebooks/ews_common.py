@@ -27,14 +27,21 @@ from scipy import stats as scipy_stats
 
 MODEL_NAMES = ['logistic_regression', 'random_forest', 'xgboost', 'mlp', 'decision_tree', 'lightgbm']
 
+# A1: `best_threshold` is the cut-off APPLIED in the test year, chosen on the previous year's
+# out-of-sample predictions (`threshold_from_year`). `test_optimal_threshold` is the F1-optimal
+# cut-off on the test year itself, kept only to show how optimistic the old metrics were.
 RESULT_COLUMNS = [
     'model', 'variant', 'dataset', 'test_year',
-    'auroc', 'auprc', 'brier', 'best_threshold',
+    'auroc', 'auprc', 'brier', 'best_threshold', 'threshold_from_year', 'test_optimal_threshold',
     'tp', 'fp', 'fn', 'tn',
     'f1', 'recall', 'precision',
     'miss_rate', 'false_alarm_rate', 'accuracy',
     'loss_07', 'loss_08', 'loss_09',
 ]
+
+# A12: gradient boosting is multithreaded, and thread scheduling can change floating-point sums
+# between runs. A fixed thread count (and LightGBM's deterministic mode) makes reruns reproducible.
+N_JOBS = 4
 
 # MLP architectures are tuned as strings (Optuna categoricals only accept primitives) and decoded here
 MLP_ARCHS = {'32': (32,), '64': (64,), '128': (128,), '64_32': (64, 32), '128_64': (128, 64)}
@@ -62,58 +69,72 @@ def expanding_window_split(df, min_train_years):
     return splits
 
 
-def run_model(model, X_train, y_train, X_test, y_test, metadata, sample_weight=None, return_proba=False):
+def f1_optimal_threshold(y_true, y_proba):
+    """Cut-off that maximises F1 on (y_true, y_proba); NaN when only one class is present."""
+    y_true = np.asarray(y_true, dtype=int)
+    if y_true.sum() == 0 or y_true.sum() == len(y_true):
+        return np.nan
+    # np.where evaluates both branches eagerly, so the divide runs even where denom=0.
+    # errstate suppresses the warning; np.where then correctly replaces those positions with 0.0.
+    precisions, recalls, thresholds = precision_recall_curve(y_true, y_proba)
+    denom     = precisions + recalls
+    with np.errstate(invalid='ignore', divide='ignore'):
+        f1_scores = np.where(denom > 0, 2 * precisions * recalls / denom, 0.0)
+    return float(thresholds[np.argmax(f1_scores[:-1])])
+
+
+def run_model(model, X_train, y_train, X_test, y_test, metadata, sample_weight=None, return_proba=False,
+              threshold=None, threshold_from_year=None):
+    """Fit, predict and score one window.
+
+    threshold : the alarm cut-off, chosen WITHOUT the test labels (A1: on the previous year's
+        out-of-sample predictions). When None or NaN, the threshold-based metrics are NaN; the
+        cut-off is never chosen on the test year. AUROC, AUPRC and Brier do not need a cut-off.
+    """
     # sample_weight is only used by MLP -- LR/RF/XGBoost handle imbalance via class_weight/scale_pos_weight
     fit_kwargs = {'sample_weight': sample_weight} if sample_weight is not None else {}
     model.fit(X_train, y_train, **fit_kwargs)
     y_proba = model.predict_proba(X_test)[:, 1]
 
-    # Find best threshold by maximising F1
-    # np.where evaluates both branches eagerly, so the divide runs even where denom=0.
-    # errstate suppresses the warning; np.where then correctly replaces those positions with 0.0.
-    precisions, recalls, thresholds = precision_recall_curve(y_test, y_proba)
-    denom     = precisions + recalls
-    with np.errstate(invalid='ignore', divide='ignore'):
-        f1_scores = np.where(denom > 0, 2 * precisions * recalls / denom, 0.0)
-    best_threshold = thresholds[np.argmax(f1_scores[:-1])]
-    y_pred = (y_proba >= best_threshold).astype(int)
-
-    tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
-
-    auroc            = roc_auc_score(y_test, y_proba)
-    auprc            = average_precision_score(y_test, y_proba)
-    brier            = brier_score_loss(y_test, y_proba)
-    f1               = f1_score(y_test, y_pred, zero_division=0)
-    recall           = recall_score(y_test, y_pred, zero_division=0)
-    precision        = precision_score(y_test, y_pred, zero_division=0)
-    miss_rate        = fn / (fn + tp) if (fn + tp) > 0 else 0.0
-    false_alarm_rate = fp / (fp + tn) if (fp + tn) > 0 else 0.0
-    accuracy         = accuracy_score(y_test, y_pred)
-
-    loss_07 = 0.7 * miss_rate + 0.3 * false_alarm_rate
-    loss_08 = 0.8 * miss_rate + 0.2 * false_alarm_rate
-    loss_09 = 0.9 * miss_rate + 0.1 * false_alarm_rate
+    auroc = roc_auc_score(y_test, y_proba)
+    auprc = average_precision_score(y_test, y_proba)
+    brier = brier_score_loss(y_test, y_proba)
 
     result = {
         **metadata,
-        'auroc':            auroc,
-        'auprc':            auprc,
-        'brier':            brier,
-        'best_threshold':   best_threshold,
-        'tp':               int(tp),
-        'fp':               int(fp),
-        'fn':               int(fn),
-        'tn':               int(tn),
-        'f1':               f1,
-        'recall':           recall,
-        'precision':        precision,
-        'miss_rate':        miss_rate,
-        'false_alarm_rate': false_alarm_rate,
-        'accuracy':         accuracy,
-        'loss_07':          loss_07,
-        'loss_08':          loss_08,
-        'loss_09':          loss_09,
+        'auroc':                  auroc,
+        'auprc':                  auprc,
+        'brier':                  brier,
+        'best_threshold':         np.nan if threshold is None else threshold,
+        'threshold_from_year':    threshold_from_year,
+        # A1: the cut-off the old code used (F1-optimal on the test year), for comparison only
+        'test_optimal_threshold': f1_optimal_threshold(y_test, y_proba),
     }
+
+    if threshold is None or np.isnan(threshold):
+        for k in ['tp', 'fp', 'fn', 'tn', 'f1', 'recall', 'precision', 'miss_rate',
+                  'false_alarm_rate', 'accuracy', 'loss_07', 'loss_08', 'loss_09']:
+            result[k] = np.nan
+    else:
+        y_pred = (y_proba >= threshold).astype(int)
+        tn, fp, fn, tp = confusion_matrix(y_test, y_pred, labels=[0, 1]).ravel()
+        miss_rate        = fn / (fn + tp) if (fn + tp) > 0 else 0.0
+        false_alarm_rate = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+        result.update({
+            'tp':               int(tp),
+            'fp':               int(fp),
+            'fn':               int(fn),
+            'tn':               int(tn),
+            'f1':               f1_score(y_test, y_pred, zero_division=0),
+            'recall':           recall_score(y_test, y_pred, zero_division=0),
+            'precision':        precision_score(y_test, y_pred, zero_division=0),
+            'miss_rate':        miss_rate,
+            'false_alarm_rate': false_alarm_rate,
+            'accuracy':         accuracy_score(y_test, y_pred),
+            'loss_07':          0.7 * miss_rate + 0.3 * false_alarm_rate,
+            'loss_08':          0.8 * miss_rate + 0.2 * false_alarm_rate,
+            'loss_09':          0.9 * miss_rate + 0.1 * false_alarm_rate,
+        })
 
     # Only include raw probabilities when requested -- used by the main training loop
     # to populate proba_store for DeLong tests. Diagnostic loops (H3, no-dummies)
@@ -137,11 +158,13 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
     ----------
     X_tr_raw, X_vl_raw : pd.DataFrame - raw (pre-imputed) feature matrices
     y_tr, y_vl         : pd.Series   - crisis labels
-    n_neg_ratio        : float        - n_neg / n_pos in the full training window (for XGBoost/MLP)
+    n_neg_ratio        : float        - n_neg / n_pos in the inner-training part (A39), for XGBoost/LightGBM/MLP
     """
     def objective(trial):
-        # Fit imputer on inner_train only - same leakage rule as the outer loop
-        imputer = SimpleImputer(strategy='median')
+        # Fit imputer on inner_train only - same leakage rule as the outer loop.
+        # A11: keep_empty_features keeps a column that is entirely missing in this fold (filled with 0),
+        # so the matrix keeps one column per feature name; dropping it broke 12b.
+        imputer = SimpleImputer(strategy='median', keep_empty_features=True)
         X_tr = imputer.fit_transform(X_tr_raw)
         X_vl = imputer.transform(X_vl_raw)
 
@@ -177,7 +200,7 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
                 subsample=trial.suggest_float('subsample', 0.5, 1.0),
                 min_child_weight=trial.suggest_int('min_child_weight', 1, 10),
                 scale_pos_weight=n_neg_ratio,
-                eval_metric='logloss', random_state=42
+                eval_metric='logloss', random_state=42, n_jobs=N_JOBS  # A12
             )
 
         elif model_name == 'mlp':
@@ -218,9 +241,11 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
                 learning_rate=trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
                 num_leaves=trial.suggest_int('num_leaves', 15, 63),
                 subsample=trial.suggest_float('subsample', 0.5, 1.0),
+                subsample_freq=1,  # A37: LightGBM only bags rows when subsample_freq > 0; at 0 the tuned subsample had no effect
                 min_child_samples=trial.suggest_int('min_child_samples', 5, 30),
                 scale_pos_weight=n_neg_ratio,
-                random_state=42, verbose=-1
+                random_state=42, verbose=-1,
+                n_jobs=N_JOBS, deterministic=True, force_row_wise=True  # A12: reproducible threading
             )
 
         # MLP has no class_weight parameter - pass sample_weight to handle class imbalance
@@ -275,7 +300,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
             subsample=best_params.get('subsample', 1.0),
             min_child_weight=best_params.get('min_child_weight', 1),
             scale_pos_weight=n_neg_ratio,
-            eval_metric='logloss', random_state=42
+            eval_metric='logloss', random_state=42, n_jobs=N_JOBS  # A12
         )
 
     elif model_name == 'mlp':
@@ -312,9 +337,11 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
             learning_rate=best_params.get('learning_rate', 0.1),
             num_leaves=best_params.get('num_leaves', 31),
             subsample=best_params.get('subsample', 1.0),
+            subsample_freq=1,  # A37: without it the subsample parameter is inert
             min_child_samples=best_params.get('min_child_samples', 20),
             scale_pos_weight=n_neg_ratio,
-            random_state=42, verbose=-1
+            random_state=42, verbose=-1,
+            n_jobs=N_JOBS, deterministic=True, force_row_wise=True  # A12
         )
 
     else:
@@ -343,8 +370,82 @@ def rt1_filter(train_full, country_col, target):
     )]
 
 
+def calibration_split(df, min_train_years):
+    """The window just before the first test window, used only to calibrate the first alarm cut-off (A1).
+
+    For test year t the cut-off is chosen on the out-of-sample predictions for t-1. The first test
+    window has no evaluated predecessor, so one extra window is fitted for t-1. It trains on one year
+    fewer than min_train_years (agreed with Esmee, 18-09-2026); its own scores are never reported.
+    """
+    return expanding_window_split(df, min_train_years - 1)[0]
+
+
+def prepare_window(train_full, use_rt1, country_col, target):
+    """RT1 filter, class ratios and the inner split for one window, or None when it cannot be fitted.
+
+    Returns a dict with the (possibly filtered) training data, the full-window class ratio used in the
+    outer refit, the inner-training class ratio used in tuning (A39), and the inner split.
+    """
+    if use_rt1:
+        train = rt1_filter(train_full, country_col, target)
+        if train[target].sum() == 0:
+            return None
+    else:
+        train = train_full
+
+    y_train     = train[target]
+    n_pos       = (y_train == 1).sum()
+    n_neg       = (y_train == 0).sum()
+    n_neg_ratio = n_neg / n_pos if n_pos > 0 else 1.0
+
+    # Inner split: last 2 years of the (possibly filtered) training window
+    train_years     = sorted(train['year'].unique())
+    inner_val_years = set(train_years[-2:])
+    inner_train     = train[~train['year'].isin(inner_val_years)]
+    inner_val       = train[train['year'].isin(inner_val_years)]
+    y_inner_train   = inner_train[target]
+    y_inner_val     = inner_val[target]
+
+    # A39: tuning fits on inner_train only, so its class weights must come from inner_train too.
+    # Taking them from the full window gave the tuned models a ratio they were never trained with.
+    n_pos_inner = (y_inner_train == 1).sum()
+    inner_ratio = (y_inner_train == 0).sum() / n_pos_inner if n_pos_inner > 0 else 1.0
+
+    return dict(train=train, y_train=y_train, n_neg_ratio=n_neg_ratio, inner_ratio=inner_ratio,
+                inner_train=inner_train, inner_val=inner_val,
+                y_inner_train=y_inner_train, y_inner_val=y_inner_val,
+                inner_val_years=inner_val_years,
+                can_tune=y_inner_val.sum() > 0 and y_inner_train.sum() > 0)
+
+
+def tune_params(model_name, w, cols, n_trials):
+    """Optuna study on the inner split of window w; {} (library defaults) when it cannot be tuned (A13)."""
+    if not w['can_tune']:
+        return {}
+    objective = get_objective(
+        model_name,
+        w['inner_train'][cols], w['y_inner_train'],
+        w['inner_val'][cols],   w['y_inner_val'],
+        w['inner_ratio'],
+    )
+    study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
+    study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
+    return study.best_params
+
+
+def outer_model(model_name, best_params, w, test, cols):
+    """Unfitted outer model and imputed matrices for window w: (model, X_train, X_test, sample_weight)."""
+    imputer     = SimpleImputer(strategy='median', keep_empty_features=True)  # A11
+    X_train_imp = imputer.fit_transform(w['train'][cols])
+    X_test_imp  = imputer.transform(test[cols])
+    model, X_train_final, X_test_final = build_final_model(
+        model_name, best_params, w['n_neg_ratio'], X_train_imp, X_test_imp, cols)
+    sw = np.where(w['y_train'] == 1, w['n_neg_ratio'], 1.0) if model_name == 'mlp' else None
+    return model, X_train_final, X_test_final, sw
+
+
 def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target, country_col,
-                         n_trials=50, model_names=MODEL_NAMES, fixed_params=None):
+                         n_trials=50, model_names=MODEL_NAMES, fixed_params=None, calibration=None):
     """The expanding-window training loop shared by 11a-d and 12a/b.
 
     For every variant, feature set, test window and model: optional RT1 filter, inner split
@@ -352,6 +453,13 @@ def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target
     library defaults: the skip rule, audit A13), outer refit on the full training window, and
     evaluation on the test year.
 
+    A1: the alarm cut-off for test year t is the F1-optimal cut-off on the out-of-sample predictions
+    for year t-1 by the same model, variant and feature set (the previous window). The test labels are
+    never used to choose it. When there is no such predecessor (RT1 2011, whose 2010 window is skipped)
+    the threshold-based metrics are NaN.
+
+    calibration : a (train, test) split for the year before the first test window (calibration_split),
+        fitted only to calibrate the first cut-off. Not reported.
     fixed_params : dict keyed (variant, dataset, test_year, model) -> params, optional.
         When given, tuning is skipped and these parameters are used. This reproduces a published
         run without re-tuning (the refit checks) and is how attribution reuses the evaluated models.
@@ -362,43 +470,28 @@ def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target
     best_params_log = {}  # keyed by (variant, dataset, test_year, model)
     proba_store     = {}  # (model, dataset, test_year, variant) -> (y_true_list, y_proba_list)
     fi_store        = {}  # (model, dataset, test_year, variant) -> {feature: importance} (None for MLP)
+    windows = ([(calibration, True)] if calibration is not None else []) + [(s, False) for s in splits]
 
     for variant_name, use_rt1 in variants:
         for dataset_name, feat_cols in feature_sets.items():
             lr_cols = feature_sets_lr[dataset_name]
             print(f"\n=== Variant: {variant_name} | Dataset: {dataset_name} ===")
+            previous = {}  # model -> (year, y_true, y_proba) of the latest out-of-sample predictions
 
-            for train_full, test in splits:
+            for (train_full, test), is_calibration in windows:
                 test_year = test['year'].values[0]
                 y_test    = test[target]
+                tag = " (calibration only)" if is_calibration else ""
 
                 if y_test.sum() == 0:
-                    print(f"  test={test_year} | SKIPPED - no crisis obs in test year")
+                    print(f"  test={test_year}{tag} | SKIPPED - no crisis obs in test year")
                     continue
 
-                if use_rt1:
-                    train = rt1_filter(train_full, country_col, target)
-                    if train[target].sum() == 0:
-                        print(f"  test={test_year} | RT1 SKIPPED - no crisis obs after onset filter")
-                        continue
-                else:
-                    train = train_full
-
-                y_train     = train[target]
-                n_pos       = (y_train == 1).sum()
-                n_neg       = (y_train == 0).sum()
-                n_neg_ratio = n_neg / n_pos if n_pos > 0 else 1.0
-
-                # Inner split: last 2 years of the (possibly filtered) training window
-                train_years     = sorted(train['year'].unique())
-                inner_val_years = set(train_years[-2:])
-                inner_train     = train[~train['year'].isin(inner_val_years)]
-                inner_val       = train[train['year'].isin(inner_val_years)]
-                y_inner_train   = inner_train[target]
-                y_inner_val     = inner_val[target]
-
-                can_tune = y_inner_val.sum() > 0 and y_inner_train.sum() > 0
-                print(f"  test={test_year} | val={sorted(inner_val_years)} | crisis_in_val={can_tune}")
+                w = prepare_window(train_full, use_rt1, country_col, target)
+                if w is None:
+                    print(f"  test={test_year}{tag} | RT1 SKIPPED - no crisis obs after onset filter")
+                    continue
+                print(f"  test={test_year}{tag} | val={sorted(w['inner_val_years'])} | crisis_in_val={w['can_tune']}")
 
                 for model_name in model_names:
                     cols = lr_cols if model_name == 'logistic_regression' else feat_cols
@@ -407,31 +500,20 @@ def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target
                     # --- Inner loop: Optuna tunes hyperparameters on inner_train/inner_val ---
                     if fixed_params is not None:
                         best_params = fixed_params.get(key, {})
-                    elif can_tune:
-                        objective = get_objective(
-                            model_name,
-                            inner_train[cols], y_inner_train,
-                            inner_val[cols],   y_inner_val,
-                            n_neg_ratio
-                        )
-                        study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
-                        study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
-                        best_params = study.best_params
                     else:
-                        best_params = {}
+                        best_params = tune_params(model_name, w, cols, n_trials)
 
-                    best_params_log[key] = best_params
+                    # --- A1: cut-off from the previous year's out-of-sample predictions ---
+                    prev = previous.get(model_name)
+                    if prev is not None and prev[0] == test_year - 1:
+                        threshold, threshold_year = f1_optimal_threshold(prev[1], prev[2]), prev[0]
+                    else:
+                        threshold, threshold_year = np.nan, None
 
                     # --- Outer loop: refit on full (filtered) training window ---
-                    imputer     = SimpleImputer(strategy='median')
-                    X_train_imp = imputer.fit_transform(train[cols])
-                    X_test_imp  = imputer.transform(test[cols])
-                    model, X_train_final, X_test_final = build_final_model(
-                        model_name, best_params, n_neg_ratio, X_train_imp, X_test_imp, cols)
-
-                    sw = np.where(y_train == 1, n_neg_ratio, 1.0) if model_name == 'mlp' else None
+                    model, X_train_final, X_test_final, sw = outer_model(model_name, best_params, w, test, cols)
                     result = run_model(
-                        model, X_train_final, y_train, X_test_final, y_test,
+                        model, X_train_final, w['y_train'], X_test_final, y_test,
                         metadata={
                             'model':     model_name,
                             'variant':   variant_name,
@@ -440,12 +522,17 @@ def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target
                         },
                         sample_weight=sw,
                         return_proba=True,
+                        threshold=threshold,
+                        threshold_from_year=threshold_year,
                     )
-                    # Store raw probabilities for DeLong test, then remove from result
-                    # so they don't appear as columns in the results DataFrame
-                    proba_store[(model_name, dataset_name, test_year, variant_name)] = (
-                        result.pop('_y_true'), result.pop('_y_proba')
-                    )
+                    y_true_list, y_proba_list = result.pop('_y_true'), result.pop('_y_proba')
+                    previous[model_name] = (test_year, y_true_list, y_proba_list)
+                    if is_calibration:
+                        continue  # calibration window: used for the next cut-off only, never reported
+
+                    best_params_log[key] = best_params
+                    # Store raw probabilities for significance tests and figures
+                    proba_store[(model_name, dataset_name, test_year, variant_name)] = (y_true_list, y_proba_list)
                     # Tree models expose feature_importances_, LR exposes coef_
                     # MLP has no native importance (None here; use SHAP in NB13 if needed)
                     if hasattr(model, 'feature_importances_'):
@@ -462,6 +549,57 @@ def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target
     else:
         print(f"\nCompleted: {len(results)} model-window evaluations")
     return results, best_params_log, proba_store, fi_store
+
+
+def run_tranquil_years(splits, feature_sets, feature_sets_lr, variants, target, country_col, proba_store,
+                       n_trials=50, model_names=MODEL_NAMES):
+    """A35 (separate analysis, outside the main results): false alarms in years without any crisis.
+
+    Test years without crisis observations are skipped by the main loop because AUROC needs both
+    classes. An early warning system is still judged on those years: every alarm there is false.
+    Each tranquil year gets a model fitted exactly as in the main loop (tuning, skip rule, RT1 filter),
+    and alarms are counted with a cut-off fixed in advance: the F1-optimal cut-off on the most recent
+    evaluated year's out-of-sample predictions in proba_store (2012 for 2013). After the first tranquil
+    year there is no newer year with crises to recalibrate on, so that cut-off is carried forward.
+
+    Returns a DataFrame with one row per model x variant x dataset x tranquil year.
+    """
+    rows = []
+    for variant_name, use_rt1 in variants:
+        for dataset_name, feat_cols in feature_sets.items():
+            lr_cols = feature_sets_lr[dataset_name]
+            for (train_full, test) in splits:
+                test_year = test['year'].values[0]
+                if test[target].sum() > 0:
+                    continue  # evaluated in the main loop
+                w = prepare_window(train_full, use_rt1, country_col, target)
+                if w is None:
+                    continue
+                for model_name in model_names:
+                    cols = lr_cols if model_name == 'logistic_regression' else feat_cols
+                    evaluated = sorted(y for (m, d, y, v) in proba_store
+                                       if m == model_name and d == dataset_name and v == variant_name and y < test_year)
+                    if not evaluated:
+                        continue
+                    last_year = evaluated[-1]
+                    y_true_prev, y_proba_prev = proba_store[(model_name, dataset_name, last_year, variant_name)]
+                    threshold = f1_optimal_threshold(y_true_prev, y_proba_prev)
+                    if np.isnan(threshold):
+                        continue
+                    best_params = tune_params(model_name, w, cols, n_trials)
+                    model, X_train_final, X_test_final, sw = outer_model(model_name, best_params, w, test, cols)
+                    fit_kwargs = {'sample_weight': sw} if sw is not None else {}
+                    model.fit(X_train_final, w['y_train'], **fit_kwargs)
+                    y_proba = model.predict_proba(X_test_final)[:, 1]
+                    alarms = int((y_proba >= threshold).sum())
+                    rows.append({
+                        'model': model_name, 'variant': variant_name, 'dataset': dataset_name,
+                        'test_year': test_year, 'threshold': threshold, 'threshold_from_year': last_year,
+                        'n_obs': len(y_proba), 'n_alarms': alarms, 'false_alarm_rate': alarms / len(y_proba),
+                        'mean_proba': float(np.mean(y_proba)), 'tuned': bool(best_params),
+                    })
+                print(f"  tranquil {variant_name}/{dataset_name}/{test_year}: done")
+    return pd.DataFrame(rows)
 
 
 def delong_test(y_true, y_score_a, y_score_b):

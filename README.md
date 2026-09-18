@@ -55,12 +55,12 @@ individually optimal techniques, because the object of comparison is the indicat
 |---|---|---|
 | `11a_modelling_baseline_lag1` | Baseline indicators, t-1 | 2010-2012 |
 | `11b_modelling_robust_lag1` | Extended indicators, t-1 | 2010-2012 |
-| `11c_modelling_baseline_lag2` | Baseline indicators, t-2 | 2010-2012 |
-| `11d_modelling_robust_lag2` | Extended indicators, t-2 | 2010-2012 |
+| `11c_modelling_baseline_lag2` | Baseline indicators, t-2 | 2011-2012 |
+| `11d_modelling_robust_lag2` | Extended indicators, t-2 | 2011-2012 |
 | `12a_macro_only_baseline` | Macro-only, country level | 2008-2012 |
 | `12b_macro_only_robust` | Macro-only, extended window | 2008-2012 |
-| `12a_granularity_baseline` | Macro at country level against bank level, baseline | 2008-2012 |
-| `12b_granularity_robust` | Macro at country level against bank level, extended | 2008-2012 |
+| `12a_granularity_baseline` | Macro at country level against bank level, baseline | 2010-2012 |
+| `12b_granularity_robust` | Macro at country level against bank level, extended | 2010-2012 |
 | `rt2a_precrisis_baseline` | Pre-crisis relabelling, baseline | 2007, fixed split |
 | `rt2b_precrisis_robust` | Pre-crisis relabelling, extended | 2007, fixed split |
 
