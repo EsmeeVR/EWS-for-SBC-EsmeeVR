@@ -42,3 +42,6 @@ Thumbs.db
 desktop.ini
 .vscode/
 .idea/
+
+# Executed notebooks and logs from tools/run_pipeline.py (large; the results they produce are committed)
+outputs/run_logs/
