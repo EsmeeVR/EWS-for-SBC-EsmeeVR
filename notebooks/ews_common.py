@@ -444,6 +444,24 @@ def outer_model(model_name, best_params, w, test, cols):
     return model, X_train_final, X_test_final, sw
 
 
+def fit_window_model(model_name, params, w, test, cols):
+    """Fit the evaluated model of one window, for attribution (13a-d, audit A4).
+
+    Same imputer, scaler and model settings as the training loop (outer_model), so the explained
+    model is the evaluated one. Returns a dict with the fitted model, the matrices it was fitted and
+    evaluated on, the imputed training matrix in raw units (for ALE) and the scaler (LR/MLP, else None).
+    """
+    model, X_train, X_test, sw = outer_model(model_name, params, w, test, cols)
+    fit_kwargs = {'sample_weight': sw} if sw is not None else {}
+    model.fit(X_train, w['y_train'], **fit_kwargs)
+    imputer     = SimpleImputer(strategy='median', keep_empty_features=True)
+    X_train_imp = imputer.fit_transform(w['train'][cols])
+    # build_final_model scales LR/MLP inputs with a StandardScaler fitted on this same matrix;
+    # refitting one here gives the identical transform, which ALE needs to work in raw units
+    scaler = StandardScaler().fit(X_train_imp) if model_name in ('logistic_regression', 'mlp') else None
+    return dict(model=model, X_train=X_train, X_test=X_test, X_train_imp=X_train_imp, scaler=scaler)
+
+
 def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target, country_col,
                          n_trials=50, model_names=MODEL_NAMES, fixed_params=None, calibration=None):
     """The expanding-window training loop shared by 11a-d and 12a/b.
@@ -600,6 +618,100 @@ def run_tranquil_years(splits, feature_sets, feature_sets_lr, variants, target, 
                     })
                 print(f"  tranquil {variant_name}/{dataset_name}/{test_year}: done")
     return pd.DataFrame(rows)
+
+
+def _auroc_ranks(y_true, y_score):
+    """AUROC from ranks (Mann-Whitney), fast enough to call thousands of times per comparison."""
+    ranks = scipy_stats.rankdata(y_score)
+    n_pos = y_true.sum()
+    n_neg = len(y_true) - n_pos
+    return (ranks[y_true == 1].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
+
+
+def cluster_bootstrap_auroc_diff(y_true, score_a, score_b, clusters, n_boot=2000, seed=42):
+    """A33: country-cluster bootstrap for AUROC(a) - AUROC(b) on the same observations.
+
+    DeLong treats every bank-year as an independent observation, but the crisis label and every macro
+    indicator are set per country, so banks in one country are not independent. Here countries are drawn
+    with replacement and all of a drawn country's observations enter the resample, which keeps that
+    dependence intact. Draws without both classes are skipped.
+
+    Returns dict(diff, ci_lo, ci_hi, p, n_valid): the observed difference, the 95% percentile interval,
+    the two-sided p-value (twice the smaller share of draws on either side of zero) and the number of
+    usable draws. NaN when fewer than 2 countries or fewer than 100 usable draws.
+    """
+    y_true  = np.asarray(y_true, dtype=int)
+    score_a = np.asarray(score_a, dtype=float)
+    score_b = np.asarray(score_b, dtype=float)
+    clusters = np.asarray(clusters)
+    out = dict(diff=np.nan, ci_lo=np.nan, ci_hi=np.nan, p=np.nan, n_valid=0)
+    if y_true.sum() == 0 or y_true.sum() == len(y_true):
+        return out
+    out['diff'] = _auroc_ranks(y_true, score_a) - _auroc_ranks(y_true, score_b)
+
+    groups = [np.flatnonzero(clusters == c) for c in pd.unique(clusters)]
+    if len(groups) < 2:
+        return out
+    rng = np.random.default_rng(seed)
+    diffs = []
+    for _ in range(n_boot):
+        idx = np.concatenate([groups[g] for g in rng.integers(0, len(groups), len(groups))])
+        yb = y_true[idx]
+        if yb.sum() == 0 or yb.sum() == len(yb):
+            continue
+        diffs.append(_auroc_ranks(yb, score_a[idx]) - _auroc_ranks(yb, score_b[idx]))
+    diffs = np.asarray(diffs)
+    out['n_valid'] = len(diffs)
+    if len(diffs) < 100:
+        return out
+    out['ci_lo'], out['ci_hi'] = np.percentile(diffs, [2.5, 97.5])
+    out['p'] = min(1.0, 2 * min((diffs <= 0).mean(), (diffs >= 0).mean()))
+    return out
+
+
+def holm_adjust(pvals):
+    """Holm step-down adjustment of a set of p-values (NaN stays NaN)."""
+    p = np.asarray(pvals, dtype=float)
+    adj = np.full_like(p, np.nan)
+    ok = ~np.isnan(p)
+    order = np.argsort(p[ok])
+    m = ok.sum()
+    running = 0.0
+    vals = np.empty(m)
+    for rank, i in enumerate(order):
+        running = max(running, (m - rank) * p[ok][i])
+        vals[i] = min(1.0, running)
+    adj[ok] = vals
+    return adj
+
+
+def add_cluster_bootstrap(delong_df, proba_store, clusters_by_year, n_boot=2000, seed=42):
+    """A33: add country-cluster bootstrap columns to the DeLong table built in 11a-d.
+
+    clusters_by_year : {test_year: array of country codes}, in the row order of the test set, which is
+        the order of the lists in proba_store (the test set is df[year == test_year], no row drops).
+    Adds diff_auroc, ci_lo, ci_hi, p_boot, p_boot_holm (Holm within each comparison and variant, across
+    models and test years) and sig_boot (p_boot < 0.05). DeLong's z, p and sig_05 are kept alongside.
+    """
+    rows = []
+    for _, r in delong_df.iterrows():
+        comp, variant, model, year = r['comparison'], r['variant'], r['model'], r['test_year']
+        if comp.startswith('integrated_vs_'):
+            key_a = (model, 'integrated', year, variant)
+            key_b = (model, comp[len('integrated_vs_'):], year, variant)
+        else:  # baseline_vs_rt1_<dataset>: same test set, baseline scores against rt1 scores
+            ds = comp[len('baseline_vs_rt1_'):]
+            key_a, key_b = (model, ds, year, 'baseline_t1'), (model, ds, year, 'rt1')
+        y_true, s_a = proba_store[key_a]
+        _,      s_b = proba_store[key_b]
+        rows.append(cluster_bootstrap_auroc_diff(y_true, s_a, s_b, clusters_by_year[year], n_boot, seed))
+    boot = pd.DataFrame(rows, index=delong_df.index).rename(columns={'diff': 'diff_auroc', 'p': 'p_boot'})
+    out = pd.concat([delong_df, boot.drop(columns='n_valid')], axis=1)
+    out['p_boot_holm'] = np.nan
+    for _, idx in out.groupby(['comparison', 'variant']).groups.items():
+        out.loc[idx, 'p_boot_holm'] = holm_adjust(out.loc[idx, 'p_boot'])
+    out['sig_boot'] = out['p_boot'] < 0.05
+    return out
 
 
 def delong_test(y_true, y_score_a, y_score_b):
