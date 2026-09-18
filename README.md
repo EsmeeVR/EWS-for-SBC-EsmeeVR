@@ -245,8 +245,10 @@ changing published numbers.
      against 0.7213, mean over models), stays the same size after exclusion (0.7254 against 0.7219).
      Changes under the `rt1` variant are of the same size.
 
-   This covers evaluation only. The non-banks remain in every training window, and their effect on
-   the fitted models is unknown without re-running.
+   This covers evaluation only. The non-banks remain in every training window of the published
+   results. The effect of removing them from training as well is measured in the refit check under
+   [Found after the thesis](#found-after-the-thesis-sample-and-variables): up to 0.020 AUROC, in the
+   extended set.
 
 7. **`13b` and `13d` refit models with pre-correction hyperparameters for two test years.** The
    attribution notebooks load `best_params_log.pkl`. For `11b` and `11d` that file is the 02-06-2026
@@ -284,6 +286,41 @@ changing published numbers.
    they are and the issue is disclosed here. Outputs recomputed with the final file exist in the
    original workspace (`outputs_11b_finalpkl`, `outputs_11d_finalpkl`) and agree with this check; they
    are not part of this repository.
+
+### Found after the thesis: sample and variables
+
+The issues below were found after the MSc thesis was completed, during a full review of the code in
+preparation for publishing it with the journal article based on the thesis. The results in this
+repository and in the article are those of the original pipeline. For each issue we report its
+measured effect, so readers can judge whether it matters for the conclusions.
+
+**How the effects were measured (17-09-2026).** The lag-1 models were refitted for the `baseline_t1`
+variant, in the baseline set (`11a`) and the extended set (`11b`), with the published final
+hyperparameters and no re-tuning. Refitting without any change reproduces the published AUROC
+exactly (54 of 54 cells in each set), so every difference below comes from the change tested. Effects
+are changes in mean AUROC over the six models, for the configuration that moves most.
+
+| Issue | What goes wrong | Effect: baseline set | Effect: extended set | Recommended fix |
+|---|---|---|---|---|
+| Non-banks in the extract (issue 6) | The NACE 641 search also returns 6411 entities, mostly Irish holding companies | up to 0.007 | up to 0.020 | Keep NACE 6419 only |
+| Entities without balance-sheet data | 28 entities never report deposits, gross loans, equity, interbank liabilities or net interest income in any year. Only total assets and ROA/ROE are observed; the rest is filled with year medians (77 usable bank-years, 35 of them crisis observations) | up to 0.015 | up to 0.009 | Drop entities without any observed core balance-sheet item |
+| Parent and subsidiary both present | A few groups appear twice with consolidated accounts, e.g. ABN AMRO Bank and ABN AMRO Group | up to 0.007 | up to 0.003 | Keep one entity per group |
+| **The three above combined** | | **up to 0.014** | **up to 0.023** | |
+| Credit-to-GDP gap coverage | Missing for 30% of country-years in 2004-2012 (Croatia, Latvia and Lithuania to 2012, several others in the early years), filled with the training median | n/a | leaving it out: 0.030 (macro-only) | Longer credit series, or a missingness indicator |
+| Growth of net foreign assets | Percentage change of a level that is negative for 11 countries, so sign and size can be meaningless | n/a | leaving it out: 0.014 (integrated) | Change in net foreign assets as a share of GDP |
+| Lags by row | A lag takes the bank's previous row, which is an older year for banks with gaps in their reporting | 14 usable bank-years (lag-1), not measured | same | Lag on calendar year |
+
+For the two macro variables, the table gives the effect of leaving the variable out. The effect of
+the recommended fix itself is not measured.
+
+**What changes and what does not.** In the baseline set, micro-only remains the best configuration
+for all six models under every change above, and integrated stays below macro-only on average. In
+the extended set, integrated moves from marginally above macro-only on average (0.725 against 0.721)
+to marginally below it with the sample fixes (0.702 against 0.722), and the best configuration
+changes for one model (sample fixes) to three models (without net foreign assets growth). Under no
+change does integration perform systematically better than the single-level configurations.
+
+Anyone building on this code is advised to apply the fixes in the last column.
 
 ---
 
