@@ -180,7 +180,7 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
             # lbfgs is the recommended solver for L2; faster and more stable than saga for small-medium data.
             model = LogisticRegression(
                 solver='lbfgs', C=C,
-                max_iter=1000, class_weight='balanced', random_state=42
+                max_iter=1000, class_weight='balanced', random_state=13
             )
 
         elif model_name == 'random_forest':
@@ -189,7 +189,7 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
                 max_depth=trial.suggest_int('max_depth', 3, 20),
                 min_samples_leaf=trial.suggest_int('min_samples_leaf', 1, 20),
                 max_features=trial.suggest_categorical('max_features', ['sqrt', 'log2', 0.5]),
-                class_weight='balanced', random_state=42,
+                class_weight='balanced', random_state=13,
             )
 
         elif model_name == 'xgboost':
@@ -200,7 +200,7 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
                 subsample=trial.suggest_float('subsample', 0.5, 1.0),
                 min_child_weight=trial.suggest_int('min_child_weight', 1, 10),
                 scale_pos_weight=n_neg_ratio,
-                eval_metric='logloss', random_state=42, n_jobs=N_JOBS  # A12
+                eval_metric='logloss', random_state=13, n_jobs=N_JOBS  # A12
             )
 
         elif model_name == 'mlp':
@@ -219,14 +219,14 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
                 alpha=trial.suggest_float('alpha', 1e-5, 1e-2, log=True),
                 max_iter=5000,
                 tol=1e-3,  # relaxed from default 1e-4 - suppresses warnings on flat loss landscapes without affecting AUROC
-                random_state=42
+                random_state=13
             )
 
         elif model_name == 'decision_tree':
             model = DecisionTreeClassifier(
                 max_depth=trial.suggest_int('max_depth', 2, 15),
                 min_samples_leaf=trial.suggest_int('min_samples_leaf', 1, 30),
-                class_weight='balanced', random_state=42
+                class_weight='balanced', random_state=13
             )
 
         elif model_name == 'lightgbm':
@@ -244,7 +244,7 @@ def get_objective(model_name, X_tr_raw, y_tr, X_vl_raw, y_vl, n_neg_ratio):
                 subsample_freq=1,  # A37: LightGBM only bags rows when subsample_freq > 0; at 0 the tuned subsample had no effect
                 min_child_samples=trial.suggest_int('min_child_samples', 5, 30),
                 scale_pos_weight=n_neg_ratio,
-                random_state=42, verbose=-1,
+                random_state=13, verbose=-1,
                 n_jobs=N_JOBS, deterministic=True, force_row_wise=True  # A12: reproducible threading
             )
 
@@ -276,7 +276,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
         model = LogisticRegression(
             solver='lbfgs',
             C=best_params.get('C', 1.0),
-            max_iter=1000, class_weight='balanced', random_state=42
+            max_iter=1000, class_weight='balanced', random_state=13
         )
 
     elif model_name == 'random_forest':
@@ -287,7 +287,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
             max_depth=best_params.get('max_depth', None),
             min_samples_leaf=best_params.get('min_samples_leaf', 1),
             max_features=best_params.get('max_features', 'sqrt'),
-            class_weight='balanced', random_state=42
+            class_weight='balanced', random_state=13
         )
 
     elif model_name == 'xgboost':
@@ -300,7 +300,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
             subsample=best_params.get('subsample', 1.0),
             min_child_weight=best_params.get('min_child_weight', 1),
             scale_pos_weight=n_neg_ratio,
-            eval_metric='logloss', random_state=42, n_jobs=N_JOBS  # A12
+            eval_metric='logloss', random_state=13, n_jobs=N_JOBS  # A12
         )
 
     elif model_name == 'mlp':
@@ -315,7 +315,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
             alpha=best_params.get('alpha', 1e-4),
             max_iter=5000,
             tol=1e-3,  # relaxed from default 1e-4 - suppresses warnings on flat loss landscapes without affecting AUROC
-            random_state=42
+            random_state=13
         )
 
     elif model_name == 'decision_tree':
@@ -324,7 +324,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
         model = DecisionTreeClassifier(
             max_depth=best_params.get('max_depth', 5),
             min_samples_leaf=best_params.get('min_samples_leaf', 5),
-            class_weight='balanced', random_state=42
+            class_weight='balanced', random_state=13
         )
 
     elif model_name == 'lightgbm':
@@ -340,7 +340,7 @@ def build_final_model(model_name, best_params, n_neg_ratio, X_train_imp, X_test_
             subsample_freq=1,  # A37: without it the subsample parameter is inert
             min_child_samples=best_params.get('min_child_samples', 20),
             scale_pos_weight=n_neg_ratio,
-            random_state=42, verbose=-1,
+            random_state=13, verbose=-1,
             n_jobs=N_JOBS, deterministic=True, force_row_wise=True  # A12
         )
 
@@ -428,7 +428,7 @@ def tune_params(model_name, w, cols, n_trials):
         w['inner_val'][cols],   w['y_inner_val'],
         w['inner_ratio'],
     )
-    study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=42))
+    study = optuna.create_study(direction='maximize', sampler=optuna.samplers.TPESampler(seed=13))
     study.optimize(objective, n_trials=n_trials, show_progress_bar=False)
     return study.best_params
 
@@ -628,7 +628,7 @@ def _auroc_ranks(y_true, y_score):
     return (ranks[y_true == 1].sum() - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
 
 
-def cluster_bootstrap_auroc_diff(y_true, score_a, score_b, clusters, n_boot=2000, seed=42):
+def cluster_bootstrap_auroc_diff(y_true, score_a, score_b, clusters, n_boot=2000, seed=13):
     """A33: country-cluster bootstrap for AUROC(a) - AUROC(b) on the same observations.
 
     DeLong treats every bank-year as an independent observation, but the crisis label and every macro
@@ -685,7 +685,7 @@ def holm_adjust(pvals):
     return adj
 
 
-def add_cluster_bootstrap(delong_df, proba_store, clusters_by_year, n_boot=2000, seed=42):
+def add_cluster_bootstrap(delong_df, proba_store, clusters_by_year, n_boot=2000, seed=13):
     """A33: add country-cluster bootstrap columns to the DeLong table built in 11a-d.
 
     clusters_by_year : {test_year: array of country codes}, in the row order of the test set, which is
