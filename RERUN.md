@@ -74,14 +74,23 @@ Estimate: modelling under an hour, attribution 1 to 1.5 hours, aggregation a few
    per regime (5 to 10) and a country-bootstrap interval, but the rule itself is unchanged.
 5. **A46**: redesign or drop the pre-crisis check.
 
-## Pre-registered reading (PROPOSED, for Esmée to confirm before the results are seen)
+## Pre-registered reading (CONFIRMED by Esmée, 18-09-2026, while the main run was in progress and before its results existed)
 
-a. The supervisors' 2% rule: a change in mean AUROC over the six models of at most about 0.015 is
-   immaterial.
-b. The audit's refit prediction for the sample fixes: in the baseline set micro-only stays best in 6
-   of 6 models; in the extended set integrated falls to about 0.70, just below macro-only.
-c. Split the run into stages (by the commits above) only if the comparison shows a claim change, or
-   a mean shift above 0.02, that (b) does not predict.
+1. **Precision and "small".** Results are reported at two decimals. A change of less than 2% relative
+   to the published value is small (e.g. 0.75 to 0.74 is 1.3%, small; 0.75 to 0.73 is 2.7%, not
+   small). This is the supervisors' 2% rule.
+2. **Small changes** are flagged, so that reported numbers are accurate in future runs.
+3. **Overriding rule.** If all numbers and results shift, even if each shift is small, the fixed
+   version is probably the one to use. Either way, the comparison provides quantified numbers for the
+   decision with the supervisors.
+4. **Claim changes.** If a claim changes (e.g. which configuration is best, the order of the
+   configurations, the "integrated beats both" count), the fix responsible is identified: by logic
+   where exactly one fix touches what changed, otherwise by rerunning the fix commits in stages.
+
+Reference prediction (from the audit's refit check of the sample fixes only): in the baseline set
+micro-only stays best in 6 of 6 models; in the extended set integrated falls to about 0.70, just below
+macro-only. The prediction did not include `nfa_gdp`, `credit_gap_missing`, calendar lags or the 2004
+growth rates.
 
 **Caveat, for transparency.** A quick check on the fixed data (18-09-2026) already refitted 11a and
 11b with the *published* hyperparameters, so some extended-set information exists before this rule is
