@@ -1,2 +1,2 @@
 Statistic,Value,n (consecutive country-year pairs),Crisis definition,Panel
-P(crisis_t == crisis_t-1),0.896,307,"Laeven & Valencia (2026), duration-coded",Contemporaneous country-year panel (baseline spec)
+P(crisis_t == crisis_t-1),0.894,302,"Laeven & Valencia (2026), duration-coded",Contemporaneous country-year panel (baseline spec)

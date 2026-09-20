@@ -27,8 +27,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 NOTEBOOKS = ROOT / "notebooks"
 
-# Dependency order. rt2a/rt2b are left out on purpose: the pre-crisis relabelling is invalid as
-# designed (audit A46) and is not rerun until it is redesigned.
+# Dependency order. rt2a/rt2b run before 14/15, which read their results. The pre-crisis
+# relabelling is still invalid as an anticipation test (audit A46); it is rerun so that every
+# number in the paper comes from one sample and one code version, and each notebook now reports
+# the A46 falsification baseline next to its own scores so the result is read as a negative one.
 STEPS = [
     ("01", "01_micro_construction"),
     ("02", "02_macro_construction"),
@@ -43,6 +45,8 @@ STEPS = [
     ("12a_gran", "12a_granularity_baseline"),
     ("12b", "12b_macro_only_robust"),
     ("12b_gran", "12b_granularity_robust"),
+    ("rt2a", "rt2a_precrisis_baseline"),
+    ("rt2b", "rt2b_precrisis_robust"),
     ("13a", "13a_attribution_11a"),
     ("13b", "13b_attribution_11b"),
     ("13c", "13c_attribution_11c"),

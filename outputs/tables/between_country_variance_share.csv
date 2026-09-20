@@ -1,33 +1,33 @@
 Spec,Code,Indicator,Between-country share
-baseline,r_cti,Cost-to-income ratio,0.02419215732362371
-baseline,x_loans_gross,Gross loans & advances,0.06924269347978325
-baseline,x_ib_liab,Interbank liabilities,0.08178295107466946
-baseline,inc_nii,Net interest income,0.049486724782935095
-baseline,p_nim,Net interest margin,0.21407158067852414
-baseline,inc_op,Operating income,0.050237231095000064
-baseline,p_roa,ROA,0.039514966278675796
-baseline,p_roe,ROE,0.03620616197901456
-baseline,x_dep,Customer deposits,0.0691683410451666
-baseline,c_eqratio,Equity ratio,0.04214923460699707
-baseline,l_assets,Log total assets,0.14261818539921942
-baseline,l_loans,Log loans,0.11541029237404035
-baseline,r_loans_assets,Loans to assets,0.06524370060374189
-baseline,r_dep_liab,Deposits to liabilities,0.24175476929497558
-baseline,c_leverage,Leverage (assets/equity),0.09576812332508798
-extended,r_cti,Cost-to-income ratio,0.02471101137382549
-extended,x_loans_gross,Gross loans & advances,0.06927704463718852
-extended,x_ib_liab,Interbank liabilities,0.08274411486521221
-extended,cr_impchg,Impairment charges,0.04925341980506313
-extended,inc_nii,Net interest income,0.047139272942234925
-extended,p_nim,Net interest margin,0.21221668804125418
-extended,inc_op,Operating income,0.0488674220127919
-extended,p_roa,ROA,0.039514966278675796
-extended,p_roe,ROE,0.03620616197901456
-extended,x_dep,Customer deposits,0.06747659797018679
-extended,c_eqratio,Equity ratio,0.04107344845913657
-extended,l_assets,Log total assets,0.14261818539921942
-extended,r_loans_assets,Loans to assets,0.052799321763929534
-extended,r_loans_dep,Loans/deposits,0.19573441316342474
-extended,r_dep_liab,Deposits to liabilities,0.2782972320839708
-extended,c_leverage,Leverage (assets/equity),0.11845476208992371
-extended,l_obsi,Log off-bal. items,0.1553488518644772
+baseline,r_cti,Cost-to-income ratio,0.025903420903548968
+baseline,x_loans_gross,Gross loans & advances,0.07118930943278426
+baseline,x_ib_liab,Interbank liabilities,0.08824283668281716
+baseline,inc_nii,Net interest income,0.04863830161982387
+baseline,p_nim,Net interest margin,0.216565998157785
+baseline,inc_op,Operating income,0.04986163221393516
+baseline,p_roa,ROA,0.050845935185138615
+baseline,p_roe,ROE,0.05169556518100626
+baseline,x_dep,Customer deposits,0.06728058300570598
+baseline,c_eqratio,Equity ratio,0.042989730159898355
+baseline,l_assets,Log total assets,0.18267073367253392
+baseline,l_loans,Log loans,0.13337146783465043
+baseline,r_loans_assets,Loans to assets,0.05519153100757773
+baseline,r_dep_liab,Deposits to liabilities,0.29513556490306697
+baseline,c_leverage,Leverage (assets/equity),0.1451173360797527
+extended,r_cti,Cost-to-income ratio,0.025903420903548968
+extended,x_loans_gross,Gross loans & advances,0.07118930943278426
+extended,x_ib_liab,Interbank liabilities,0.08824283668281716
+extended,cr_impchg,Impairment charges,0.05635889412550607
+extended,inc_nii,Net interest income,0.048547092732485475
+extended,p_nim,Net interest margin,0.2165828781390054
+extended,inc_op,Operating income,0.04985468158851063
+extended,p_roa,ROA,0.050845935185138615
+extended,p_roe,ROE,0.05169556518100626
+extended,x_dep,Customer deposits,0.06728058300570598
+extended,c_eqratio,Equity ratio,0.04202325538114543
+extended,l_assets,Log total assets,0.18267073367253392
+extended,r_loans_assets,Loans to assets,0.05519153100757773
+extended,r_loans_dep,Loans/deposits,0.20267768206184394
+extended,r_dep_liab,Deposits to liabilities,0.29513556490306697
+extended,c_leverage,Leverage (assets/equity),0.1451173360797527
+extended,l_obsi,Log off-bal. items,0.1618653858635027

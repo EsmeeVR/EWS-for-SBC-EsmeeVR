@@ -1,0 +1,379 @@
+# Results comparison: final-seed42
+
+- Old: audit-2026-09 @ dd7a51c (git)
+- New: C:\Users\esmvr\thesis-ews-final (folder)
+- Claim checks on AUROC, means over matched test years; material change ≥ 0.01
+- Claim checks use the six models; left out (still compared cell by cell): lr_no_dummies
+- Generated 19-09-2026 00:16
+
+## Verdict
+
+- Cells compared: **594**, identical: **46**, changed: **548**
+- Largest AUROC change in one cell: +0.5183 (11a baseline_t1 decision_tree integrated 2012)
+- Cells where a threshold-based metric changed: 548
+- Claim changes: **25**
+  - 11a baseline_t1: order of configurations: micro > macro > integrated → micro > integrated > macro
+  - 11a baseline_t1: integrated beats both: 0/6 → 1/6
+  - 11a baseline_t1: best configuration for decision_tree: micro → integrated
+  - 11a rt1: order of configurations: macro > integrated > micro → integrated > macro > micro
+  - 11a rt1: integrated beats both: 2/6 → 3/6
+  - 11a rt1: best configuration for xgboost: macro → integrated
+  - 11b baseline_t1: order of configurations: integrated > macro > micro → macro > micro > integrated
+  - 11b rt1: order of configurations: macro > integrated > micro → integrated > micro > macro
+  - 11b rt1: integrated beats both: 1/6 → 4/6
+  - 11b rt1: best configuration for lightgbm: macro → integrated
+  - 11b rt1: best configuration for logistic_regression: micro → integrated
+  - 11b rt1: best configuration for random_forest: macro → integrated
+  - 11c baseline_t1: order of configurations: micro > macro > integrated → micro > integrated > macro
+  - 11c baseline_t1: integrated beats both: 0/6 → 1/6
+  - 11c baseline_t1: best configuration for random_forest: micro → integrated
+  - 11c rt1: integrated beats both: 3/6 → 4/6
+  - 11c rt1: best configuration for lightgbm: macro → integrated
+  - 11d baseline_t1: integrated beats both: 1/6 → 3/6
+  - 11d baseline_t1: best configuration for decision_tree: integrated → micro
+  - 11d baseline_t1: best configuration for lightgbm: macro → integrated
+  - 11d baseline_t1: best configuration for mlp: micro → integrated
+  - 11d baseline_t1: best configuration for random_forest: macro → integrated
+  - 11d rt1: integrated beats both: 3/6 → 4/6
+  - 11d rt1: best configuration for logistic_regression: micro → macro
+  - 11d rt1: best configuration for random_forest: macro → integrated
+- Means over models that moved by 0.01 or more: **18**
+  - 11a baseline_t1 integrated: 0.640 → 0.664 (+0.024)
+  - 11a rt1 integrated: 0.895 → 0.884 (-0.011)
+  - 11a rt1 macro: 0.900 → 0.883 (-0.016)
+  - 11a rt1 micro: 0.885 → 0.865 (-0.020)
+  - 11b baseline_t1 macro: 0.721 → 0.741 (+0.020)
+  - 11b baseline_t1 micro: 0.691 → 0.728 (+0.037)
+  - 11b rt1 macro: 0.913 → 0.875 (-0.038)
+  - 11c baseline_t1 integrated: 0.657 → 0.689 (+0.032)
+  - 11c baseline_t1 macro: 0.693 → 0.663 (-0.030)
+  - 11c baseline_t1 micro: 0.802 → 0.747 (-0.055)
+  - 11c rt1 macro: 0.869 → 0.855 (-0.014)
+  - 11d baseline_t1 macro: 0.797 → 0.762 (-0.035)
+  - 11d baseline_t1 micro: 0.756 → 0.722 (-0.034)
+  - 11d rt1 macro: 0.875 → 0.857 (-0.018)
+  - 12b macro_standalone macro: 0.692 → 0.676 (-0.015)
+  - 12b rt1 macro: 0.659 → 0.621 (-0.038)
+  - 12b_gran macro_standalone macro: 0.695 → 0.721 (+0.027)
+  - 12b_gran rt1 macro: 0.810 → 0.833 (+0.023)
+- Structural differences: **16** (see below)
+
+## Files read
+
+| Spec | Old | New |
+|---|---|---|
+| 11a | results_11a_final.xlsx | results_11a_final.xlsx |
+| 11b | results_11b_final.xlsx | results_11b_final.xlsx |
+| 11c | results_11c_draft4.xlsx | results_11c_final.xlsx ⚠ draft vs final |
+| 11d | results_11d_final.xlsx | results_11d_final.xlsx |
+| 12a | results_12a_final.xlsx | results_12a_final.xlsx |
+| 12a_gran | results_12a_isolate_gran_final.xlsx | results_12a_isolate_gran_final.xlsx |
+| 12b | results_12b_final.xlsx | results_12b_final.xlsx |
+| 12b_gran | results_12b_isolate_gran_final.xlsx | results_12b_isolate_gran_final.xlsx |
+| rt2a | results_rt2a_final.xlsx | results_rt2a_final.xlsx |
+| rt2b | results_rt2b_final.xlsx | results_rt2b_final.xlsx |
+
+## Structural differences
+
+- **11a**: column `threshold_from_year` added
+- **11a**: column `test_optimal_threshold` added
+- **11b**: column `threshold_from_year` added
+- **11b**: column `test_optimal_threshold` added
+- **11c**: column `threshold_from_year` added
+- **11c**: column `test_optimal_threshold` added
+- **11d**: column `threshold_from_year` added
+- **11d**: column `test_optimal_threshold` added
+- **12a**: column `threshold_from_year` added
+- **12a**: column `test_optimal_threshold` added
+- **12a_gran**: column `threshold_from_year` added
+- **12a_gran**: column `test_optimal_threshold` added
+- **12b**: column `threshold_from_year` added
+- **12b**: column `test_optimal_threshold` added
+- **12b_gran**: column `threshold_from_year` added
+- **12b_gran**: column `test_optimal_threshold` added
+
+## Per specification
+
+### 11a · baseline_t1
+
+Mean AUROC over models (test years 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.749 | 0.748 | -0.001 |
+| macro | 0.652 | 0.642 | -0.010 |
+| integrated | 0.640 | 0.664 | +0.024 |
+
+Order of configurations: micro > macro > integrated  →  **micro > integrated > macro**
+Integrated beats both: 0/6  →  **1/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | integrated ⚠ | +0.038 | -0.019 | +0.134 |
+| lightgbm | micro | micro | +0.010 | +0.040 | -0.005 |
+| logistic_regression | micro | micro | -0.033 | -0.002 | +0.001 |
+| mlp | micro | micro | -0.042 | +0.032 | -0.025 |
+| random_forest | micro | micro | +0.022 | -0.043 | -0.001 |
+| xgboost | micro | micro | +0.001 | -0.067 | +0.036 |
+
+### 11a · rt1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.885 | 0.865 | -0.020 |
+| macro | 0.900 | 0.883 | -0.016 |
+| integrated | 0.895 | 0.884 | -0.011 |
+
+Order of configurations: macro > integrated > micro  →  **integrated > macro > micro**
+Integrated beats both: 2/6  →  **3/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | -0.034 | -0.065 | -0.007 |
+| lightgbm | macro | macro | -0.014 | -0.029 | -0.038 |
+| logistic_regression | macro | macro | -0.004 | +0.000 | -0.003 |
+| mlp | integrated | integrated | -0.040 | -0.013 | -0.019 |
+| random_forest | integrated | integrated | -0.007 | +0.003 | -0.012 |
+| xgboost | macro | integrated ⚠ | -0.022 | +0.006 | +0.014 |
+
+### 11b · baseline_t1
+
+Mean AUROC over models (test years 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.691 | 0.728 | +0.037 |
+| macro | 0.721 | 0.741 | +0.020 |
+| integrated | 0.725 | 0.724 | -0.001 |
+
+Order of configurations: integrated > macro > micro  →  **macro > micro > integrated**
+Integrated beats both: 2/6  (unchanged)
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | macro | macro | +0.013 | +0.048 | -0.018 |
+| lightgbm | integrated | integrated | +0.033 | -0.016 | -0.071 |
+| logistic_regression | micro | micro | -0.017 | +0.014 | +0.026 |
+| mlp | micro | micro | +0.098 | +0.044 | +0.056 |
+| random_forest | integrated | integrated | +0.051 | +0.041 | +0.044 |
+| xgboost | macro | macro | +0.043 | -0.013 | -0.041 |
+
+### 11b · rt1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.879 | 0.884 | +0.005 |
+| macro | 0.913 | 0.875 | -0.038 |
+| integrated | 0.901 | 0.901 | -0.000 |
+
+Order of configurations: macro > integrated > micro  →  **integrated > micro > macro**
+Integrated beats both: 1/6  →  **4/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | +0.018 | -0.074 | -0.009 |
+| lightgbm | macro | integrated ⚠ | +0.015 | -0.118 | -0.007 |
+| logistic_regression | micro | integrated ⚠ | -0.001 | +0.006 | +0.006 |
+| mlp | integrated | integrated | -0.009 | -0.017 | -0.013 |
+| random_forest | macro | integrated ⚠ | -0.001 | -0.008 | +0.017 |
+| xgboost | macro | macro | +0.010 | -0.019 | +0.005 |
+
+### 11c · baseline_t1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.802 | 0.747 | -0.055 |
+| macro | 0.693 | 0.663 | -0.030 |
+| integrated | 0.657 | 0.689 | +0.032 |
+
+Order of configurations: micro > macro > integrated  →  **micro > integrated > macro**
+Integrated beats both: 0/6  →  **1/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | -0.068 | -0.100 | +0.083 |
+| lightgbm | micro | micro | -0.086 | -0.130 | +0.156 |
+| logistic_regression | micro | micro | -0.015 | -0.048 | +0.001 |
+| mlp | micro | micro | -0.060 | +0.014 | +0.010 |
+| random_forest | micro | integrated ⚠ | -0.028 | +0.147 | +0.070 |
+| xgboost | micro | micro | -0.073 | -0.060 | -0.126 |
+
+### 11c · rt1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.846 | 0.844 | -0.001 |
+| macro | 0.869 | 0.855 | -0.014 |
+| integrated | 0.875 | 0.870 | -0.005 |
+
+Order of configurations: integrated > macro > micro  (unchanged)
+Integrated beats both: 3/6  →  **4/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | -0.028 | -0.094 | -0.067 |
+| lightgbm | macro | integrated ⚠ | +0.004 | -0.012 | +0.026 |
+| logistic_regression | micro | micro | -0.000 | +0.005 | +0.004 |
+| mlp | integrated | integrated | +0.011 | +0.006 | -0.004 |
+| random_forest | integrated | integrated | +0.010 | +0.005 | +0.010 |
+| xgboost | integrated | integrated | -0.004 | +0.006 | -0.003 |
+
+### 11d · baseline_t1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.756 | 0.722 | -0.034 |
+| macro | 0.797 | 0.762 | -0.035 |
+| integrated | 0.801 | 0.809 | +0.007 |
+
+Order of configurations: integrated > macro > micro  (unchanged)
+Integrated beats both: 1/6  →  **3/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | integrated | micro ⚠ | +0.030 | -0.097 | -0.196 |
+| lightgbm | macro | integrated ⚠ | -0.011 | -0.185 | +0.071 |
+| logistic_regression | micro | micro | -0.036 | +0.011 | +0.036 |
+| mlp | micro | integrated ⚠ | -0.056 | +0.091 | +0.123 |
+| random_forest | macro | integrated ⚠ | -0.130 | -0.005 | +0.028 |
+| xgboost | macro | macro | -0.003 | -0.024 | -0.018 |
+
+### 11d · rt1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.842 | 0.850 | +0.007 |
+| macro | 0.875 | 0.857 | -0.018 |
+| integrated | 0.892 | 0.895 | +0.003 |
+
+Order of configurations: integrated > macro > micro  (unchanged)
+Integrated beats both: 3/6  →  **4/6**
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | +0.003 | -0.100 | -0.081 |
+| lightgbm | integrated | integrated | +0.029 | -0.063 | +0.059 |
+| logistic_regression | micro | macro ⚠ | -0.000 | +0.007 | +0.006 |
+| mlp | integrated | integrated | -0.008 | +0.053 | +0.016 |
+| random_forest | macro | integrated ⚠ | +0.009 | -0.008 | +0.009 |
+| xgboost | integrated | integrated | +0.013 | +0.003 | +0.008 |
+
+### 12a · macro_standalone
+
+Mean AUROC over models (test years 2008, 2009, 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.619 | 0.623 | +0.003 |
+
+### 12a · rt1
+
+Mean AUROC over models (test years 2008, 2009, 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.598 | 0.597 | -0.001 |
+
+### 12a_gran · macro_standalone
+
+Mean AUROC over models (test years 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.675 | 0.666 | -0.009 |
+
+### 12a_gran · rt1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.761 | 0.761 | +0.000 |
+
+### 12b · macro_standalone
+
+Mean AUROC over models (test years 2001, 2002, 2008, 2009, 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.692 | 0.676 | -0.015 |
+
+### 12b · rt1
+
+Mean AUROC over models (test years 2001, 2002, 2008, 2009, 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.659 | 0.621 | -0.038 |
+
+### 12b_gran · macro_standalone
+
+Mean AUROC over models (test years 2010, 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.695 | 0.721 | +0.027 |
+
+### 12b_gran · rt1
+
+Mean AUROC over models (test years 2011, 2012):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| macro | 0.810 | 0.833 | +0.023 |
+
+### rt2a · rt2_2yr
+
+Mean AUROC over models (test years 2007):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.900 | 0.900 | +0.000 |
+| macro | 0.907 | 0.907 | +0.000 |
+| integrated | 0.916 | 0.916 | +0.000 |
+
+Order of configurations: integrated > macro > micro  (unchanged)
+Integrated beats both: 4/6  (unchanged)
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | +0.000 | +0.000 | +0.000 |
+| lightgbm | integrated | integrated | +0.000 | +0.000 | +0.000 |
+| logistic_regression | integrated | integrated | +0.000 | +0.000 | +0.000 |
+| mlp | integrated | integrated | +0.000 | +0.000 | +0.000 |
+| random_forest | macro | macro | +0.000 | +0.000 | +0.000 |
+| xgboost | integrated | integrated | +0.000 | +0.000 | +0.000 |
+
+### rt2b · rt2_2yr
+
+Mean AUROC over models (test years 2007):
+
+| Configuration | Old | New | Δ |
+|---|---|---|---|
+| micro | 0.920 | 0.920 | +0.000 |
+| macro | 0.894 | 0.894 | +0.000 |
+| integrated | 0.926 | 0.926 | +0.000 |
+
+Order of configurations: integrated > micro > macro  (unchanged)
+Integrated beats both: 4/6  (unchanged)
+
+| Model | Best (old) | Best (new) | micro Δ | macro Δ | integrated Δ |
+|---|---|---|---|---|---|
+| decision_tree | micro | micro | +0.000 | +0.000 | +0.000 |
+| lightgbm | integrated | integrated | +0.000 | +0.000 | +0.000 |
+| logistic_regression | integrated | integrated | +0.000 | +0.000 | +0.000 |
+| mlp | integrated | integrated | +0.000 | +0.000 | +0.000 |
+| random_forest | macro | macro | +0.000 | +0.000 | +0.000 |
+| xgboost | integrated | integrated | +0.000 | +0.000 | +0.000 |

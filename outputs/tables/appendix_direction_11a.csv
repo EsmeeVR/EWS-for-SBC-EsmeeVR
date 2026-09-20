@@ -1,25 +1,25 @@
 ﻿Variable,Code,Level,Mean |SHAP|,Direction,rho,Models agreeing,Monotone,Evidence
-Real GDP growth,NGDP_RPCH,Macro,0.927,Higher → lower risk,-0.85,6/6,5/6,Consistent
-REER growth,reer_g,Macro,0.654,Higher → higher risk,0.79,6/6,5/6,Consistent
-Unemployment rate,LUR,Macro,0.571,Higher → lower risk,-0.55,6/6,2/6,"Sign consistent, shape reverses"
-Nominal GDP (log),NGDPD,Macro,0.328,Higher → higher risk,0.9,5/6,6/6,Consistent
-Inflation (CPI),PCPIPCH,Macro,0.277,—,0.35,4/6,0/6,No clear direction
-FX reserves (log),RXF11FX_REVS,Macro,0.256,Higher → lower risk,-0.42,6/6,1/6,"Sign consistent, shape reverses"
-FX reserves growth,fx_g,Macro,0.119,—,0.05,3/6,0/6,No clear direction
-Real effective exchange rate,BIS_REER,Macro,0.101,Higher → higher risk,0.51,6/6,3/6,"Sign consistent, shape reverses"
-Current account (% GDP),BCA_NGDPD,Macro,0.091,—,0.43,4/6,2/6,No clear direction
-Return on equity,p_roe,Micro,0.055,Higher → lower risk,-0.48,5/6,5/5,Consistent
-Net interest margin,p_nim,Micro,0.043,Higher → lower risk,-0.45,5/6,3/6,"Sign consistent, shape reverses"
-Log total assets,l_assets,Micro,0.028,Higher → higher risk,0.72,6/6,6/6,Consistent
-Return on assets,p_roa,Micro,0.023,Higher → lower risk,-0.35,5/6,6/6,Consistent
-Cost-to-income ratio,r_cti,Micro,0.018,Higher → higher risk,0.33,6/6,5/6,Consistent
-Gross loans,x_loans_gross,Micro,0.017,—,0.15,3/6,2/5,No clear direction
-Equity ratio,c_eqratio,Micro,0.017,—,0.05,3/6,2/6,No clear direction
-Leverage,c_leverage,Micro,0.016,—,0.02,3/6,3/6,No clear direction
-Net interest income,inc_nii,Micro,0.016,—,0.24,5/6,4/5,No clear direction
-Log loans,l_loans,Micro,0.016,—,0.21,5/6,2/6,No clear direction
-Operating income,inc_op,Micro,0.015,—,0.04,3/6,6/6,No clear direction
-Customer deposits,x_dep,Micro,0.014,—,0.02,5/6,2/6,No clear direction
-Interbank liabilities,x_ib_liab,Micro,0.009,—,-0.05,4/6,1/6,No clear direction
-Loans-to-assets,r_loans_assets,Micro,0.009,—,-0.08,3/6,1/6,No clear direction
-Deposits-to-liabilities,r_dep_liab,Micro,0.007,—,-0.14,3/6,2/5,No clear direction
+Real GDP growth,NGDP_RPCH,Macro,1.028,Higher → lower risk,-0.87,6/6,5/6,Consistent
+REER growth,reer_g,Macro,0.791,Higher → higher risk,0.79,6/6,5/6,Consistent
+Unemployment rate,LUR,Macro,0.605,Higher → lower risk,-0.44,5/6,1/6,"Sign consistent, shape reverses"
+Nominal GDP (log),NGDPD,Macro,0.367,Higher → higher risk,0.86,6/6,4/6,"Sign consistent, shape reverses"
+Inflation (CPI),PCPIPCH,Macro,0.326,—,0.29,5/6,0/6,No clear direction
+FX reserves (log),RXF11FX_REVS,Macro,0.309,Higher → lower risk,-0.41,6/6,3/6,"Sign consistent, shape reverses"
+FX reserves growth,fx_g,Macro,0.146,—,0.21,4/6,1/6,No clear direction
+Real effective exchange rate,BIS_REER,Macro,0.128,Higher → higher risk,0.64,6/6,3/6,"Sign consistent, shape reverses"
+Current account (% GDP),BCA_NGDPD,Macro,0.099,—,0.38,3/6,0/5,No clear direction
+Log total assets,l_assets,Micro,0.05,Higher → higher risk,0.59,5/6,5/6,Consistent
+Net interest margin,p_nim,Micro,0.049,Higher → lower risk,-0.78,5/6,5/5,Consistent
+Return on equity,p_roe,Micro,0.038,Higher → lower risk,-0.66,5/6,5/5,Consistent
+Log loans,l_loans,Micro,0.038,—,-0.09,2/6,2/3,No clear direction
+Leverage,c_leverage,Micro,0.024,—,0.56,4/6,3/5,No clear direction
+Deposits-to-liabilities,r_dep_liab,Micro,0.023,—,-0.51,3/6,5/5,No clear direction
+Net interest income,inc_nii,Micro,0.018,Higher → higher risk,0.49,5/6,5/5,Consistent
+Loans-to-assets,r_loans_assets,Micro,0.018,Higher → lower risk,-0.45,5/6,4/5,Consistent
+Interbank liabilities,x_ib_liab,Micro,0.016,—,0.08,3/6,5/5,No clear direction
+Gross loans,x_loans_gross,Micro,0.011,Higher → lower risk,-0.34,5/6,3/5,"Sign consistent, shape reverses"
+Return on assets,p_roa,Micro,0.01,Higher → lower risk,-0.65,5/6,5/5,Consistent
+Operating income,inc_op,Micro,0.009,—,0.36,4/6,5/5,No clear direction
+Equity ratio,c_eqratio,Micro,0.008,—,-0.53,4/6,5/5,No clear direction
+Cost-to-income ratio,r_cti,Micro,0.007,—,0.08,3/6,2/6,No clear direction
+Customer deposits,x_dep,Micro,0.004,—,0.15,3/6,2/4,No clear direction
