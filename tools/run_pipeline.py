@@ -43,6 +43,8 @@ STEPS = [
     ("12a_gran", "12a_granularity_baseline"),
     ("12b", "12b_macro_only_robust"),
     ("12b_gran", "12b_granularity_robust"),
+    ("rt2a", "rt2a_precrisis_baseline"),
+    ("rt2b", "rt2b_precrisis_robust"),
     ("13a", "13a_attribution_11a"),
     ("13b", "13b_attribution_11b"),
     ("13c", "13c_attribution_11c"),
