@@ -72,4 +72,14 @@ so it is **not** a real-time forecast and is never framed as one.
 
 ## Deviations
 
-*(none yet)*
+**22-09-2026, before the first run (implementation details fixed in `tools/precrisis_loco.py`):**
+- **LR without country dummies.** A held-out country has no dummy of its own, so LR uses the
+  indicators only. The LR in the main tables carries dummies; the two are not the same model.
+- **Inner validation split for tuning:** within the 24 training countries, **4 crisis and 2
+  non-crisis countries** form the inner validation set, drawn per outer fold with the seed
+  (`numpy.random.default_rng([seed, fold])`). The objective is bank-level AUROC on that set, as in the
+  main design. Every inner split contains crisis observations, so every fit is tuned (no defaults).
+- **Training years:** label years 2006-2012 of the lag-1 panel (`me_merged_base.parquet`), 1,901
+  bank-years; 15 micro and 9 macro indicators, the 11a baseline set after the Belsley drops.
+- Seeds enter through each seed worktree's own `ews_common.py` (model `random_state`) and the Optuna
+  sampler seed, exactly as in the main run.
