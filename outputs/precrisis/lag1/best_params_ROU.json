@@ -1,0 +1,165 @@
+{
+ "inner_validation_countries": [
+  "FIN",
+  "IRL",
+  "LUX",
+  "NLD",
+  "PRT",
+  "SVK"
+ ],
+ "models": {
+  "micro|logistic_regression": {
+   "params": {
+    "C": 0.00011914609599238068
+   },
+   "inner_auroc": 0.6267810273715785
+  },
+  "micro|random_forest": {
+   "params": {
+    "n_estimators": 286,
+    "max_depth": 14,
+    "min_samples_leaf": 17,
+    "max_features": 0.5
+   },
+   "inner_auroc": 0.6206880389951256
+  },
+  "micro|xgboost": {
+   "params": {
+    "n_estimators": 353,
+    "max_depth": 6,
+    "learning_rate": 0.16571295709780015,
+    "subsample": 0.515723193813149,
+    "min_child_weight": 9
+   },
+   "inner_auroc": 0.6539651293588301
+  },
+  "micro|mlp": {
+   "params": {
+    "hidden_layer_sizes": "64_32",
+    "learning_rate_init": 0.00010001484586454276,
+    "alpha": 0.0009252201689606825
+   },
+   "inner_auroc": 0.6570116235470567
+  },
+  "micro|decision_tree": {
+   "params": {
+    "max_depth": 5,
+    "min_samples_leaf": 4
+   },
+   "inner_auroc": 0.6092519685039369
+  },
+  "micro|lightgbm": {
+   "params": {
+    "n_estimators": 183,
+    "max_depth": 10,
+    "learning_rate": 0.03752539994408563,
+    "num_leaves": 30,
+    "subsample": 0.5033570515646267,
+    "min_child_samples": 25
+   },
+   "inner_auroc": 0.6537307836520435
+  },
+  "macro|logistic_regression": {
+   "params": {
+    "C": 0.0019537172934784475
+   },
+   "inner_auroc": 0.7378140232470941
+  },
+  "macro|random_forest": {
+   "params": {
+    "n_estimators": 114,
+    "max_depth": 6,
+    "min_samples_leaf": 10,
+    "max_features": "log2"
+   },
+   "inner_auroc": 0.7695913010873641
+  },
+  "macro|xgboost": {
+   "params": {
+    "n_estimators": 104,
+    "max_depth": 7,
+    "learning_rate": 0.010496827806769806,
+    "subsample": 0.6869013226179206,
+    "min_child_weight": 2
+   },
+   "inner_auroc": 0.6853205849268842
+  },
+  "macro|mlp": {
+   "params": {
+    "hidden_layer_sizes": "32",
+    "learning_rate_init": 0.0002223325369121963,
+    "alpha": 0.0008180032204043904
+   },
+   "inner_auroc": 0.7940569928758905
+  },
+  "macro|decision_tree": {
+   "params": {
+    "max_depth": 9,
+    "min_samples_leaf": 22
+   },
+   "inner_auroc": 0.782761529808774
+  },
+  "macro|lightgbm": {
+   "params": {
+    "n_estimators": 281,
+    "max_depth": 7,
+    "learning_rate": 0.020450573702449383,
+    "num_leaves": 20,
+    "subsample": 0.6632962486643504,
+    "min_child_samples": 17
+   },
+   "inner_auroc": 0.7582020997375327
+  },
+  "integrated|logistic_regression": {
+   "params": {
+    "C": 0.0009240459489864367
+   },
+   "inner_auroc": 0.7280183727034121
+  },
+  "integrated|random_forest": {
+   "params": {
+    "n_estimators": 472,
+    "max_depth": 18,
+    "min_samples_leaf": 1,
+    "max_features": 0.5
+   },
+   "inner_auroc": 0.7562101612298462
+  },
+  "integrated|xgboost": {
+   "params": {
+    "n_estimators": 131,
+    "max_depth": 3,
+    "learning_rate": 0.012382632956404021,
+    "subsample": 0.6045068612264565,
+    "min_child_weight": 2
+   },
+   "inner_auroc": 0.6844300712410948
+  },
+  "integrated|mlp": {
+   "params": {
+    "hidden_layer_sizes": "32",
+    "learning_rate_init": 0.0035982350558975734,
+    "alpha": 0.00014129060676004154
+   },
+   "inner_auroc": 0.7881514810648669
+  },
+  "integrated|decision_tree": {
+   "params": {
+    "max_depth": 9,
+    "min_samples_leaf": 22
+   },
+   "inner_auroc": 0.782761529808774
+  },
+  "integrated|lightgbm": {
+   "params": {
+    "n_estimators": 330,
+    "max_depth": 10,
+    "learning_rate": 0.025139699138708338,
+    "num_leaves": 44,
+    "subsample": 0.776032007143037,
+    "min_child_samples": 15
+   },
+   "inner_auroc": 0.750140607424072
+  }
+ }
+}
