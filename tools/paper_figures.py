@@ -7,6 +7,9 @@ Figure A  Mean AUROC per configuration across specifications, test years 2011-20
 Figure B  Share of SHAP attribution taken by the bank-level block, per model, in the integrated
           configuration (baseline and extended set, lag 1). Bar = seed 42, whisker = five-seed range.
           Shares are within-model (each model's |SHAP| sums to 100%) before averaging, as in NB15.
+Figure C  Where the attribution goes when the indicator set is extended: per model a baseline and an
+          extended 100% bar, the extended one split into bank-level, macroeconomic already in the baseline,
+          and the four added macroeconomic indicators (seed 42). Replaces the earlier dumbbell version.
 
 Reads only committed outputs of the five runs: outputs/results/11x/results_11x_final.xlsx and
 outputs/tables/shap_displacement_11a_11b.xlsx in each worktree. Writes PDF + PNG to outputs/figures/paper/.
@@ -84,7 +87,7 @@ for seed, repo in SEEDS.items():
     pm = pd.read_excel(repo / "outputs/tables/shap_displacement_11a_11b.xlsx", sheet_name="Per model").set_index("Model")
     for key, lab in MODELS:
         sh.append(dict(seed=seed, model=lab, baseline=pm.loc[key, "Micro block 11a (%)"],
-                       extended=pm.loc[key, "Micro block 11b (%)"]))
+                       extended=pm.loc[key, "Micro block 11b (%)"], added_macro=pm.loc[key, "Added macro (%)"]))
 B = pd.DataFrame(sh)
 B.to_csv(OUT / "figB_shap_micro_share_data.csv", index=False)
 
@@ -116,30 +119,43 @@ for ext in ["pdf", "png"]:
 plt.close(fig)
 
 # ---------------------------------------------------------------- Figure C
-# Displacement: bank-level share of attribution in the integrated configuration, baseline set (grey dot)
-# against extended set (teal dot), per model, lag 1, seed 42. Values written next to each row, so the figure
-# reads without the axis. Seed ranges are left out here (they are in figure B); the text states that the
-# share falls in five of six models in every seed.
-fig, ax = plt.subplots(figsize=(6.5, 3.1))
+# Where the attribution goes when the indicator set is extended (integrated configuration, lag 1, seed 42).
+# Per model two 100% bars: baseline set (bank-level | macroeconomic) and extended set (bank-level | macroeconomic
+# already in the baseline | the four added macroeconomic indicators). The added block is a lighter, hatched purple:
+# it is macroeconomic too, and the hatch keeps it distinguishable without colour. The extended bank-level block
+# includes the three added bank-level indicators (about 1% together).
+NEW = "#B3A6E6"
+fig, ax = plt.subplots(figsize=(6.5, 4.4))
+h, gap = 0.34, 0.04
+yt, yl = [], []
 for j_, (_, lab) in enumerate(MODELS):
-    y = len(MODELS) - 1 - j_
-    g = B[(B.model == lab) & (B.seed == 42)]
-    b42, e42 = g.baseline.iloc[0], g.extended.iloc[0]
-    ax.plot([b42, e42], [y, y], color=GRID, lw=3, solid_capstyle="round", zorder=1)
-    ax.plot(b42, y, "o", ms=8, color="#939598", mec="white", mew=1, zorder=3)
-    ax.plot(e42, y, "o", ms=8, color=COL["micro"], mec="white", mew=1, zorder=3)
-    ax.text(31, y, f"{b42:.1f}% → {e42:.1f}%", va="center", fontsize=8, color=INK)
-ax.set_yticks(range(len(MODELS))); ax.set_yticklabels([lab for _, lab in MODELS][::-1])
+    y = (len(MODELS) - 1 - j_) * 1.0
+    g = B[(B.model == lab) & (B.seed == 42)].iloc[0]
+    mb, me, am = g.baseline, g.extended, g.added_macro
+    yb, ye = y + h / 2 + gap / 2, y - h / 2 - gap / 2
+    ax.barh(yb, mb, height=h, color=COL["micro"], lw=0)
+    ax.barh(yb, 100 - mb, left=mb, height=h, color=COL["macro"], lw=0)
+    ax.barh(ye, me, height=h, color=COL["micro"], lw=0)
+    ax.barh(ye, 100 - me - am, left=me, height=h, color=COL["macro"], lw=0)
+    ax.barh(ye, am, left=100 - am, height=h, color=NEW, hatch="////", edgecolor="white", lw=0)
+    ax.text(101.5, yb, f"{mb:.0f}%", va="center", fontsize=7.5, color=INK)
+    ax.text(101.5, ye, f"{me:.0f}%", va="center", fontsize=7.5, color=INK)
+    ax.text(100 - am / 2, ye, f"{am:.0f}%", va="center", ha="center", fontsize=7, color=INK,
+            bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none"))
+    ax.text(-1.5, yb, "Baseline", va="center", ha="right", fontsize=7, color=MUTED)
+    ax.text(-1.5, ye, "Extended", va="center", ha="right", fontsize=7, color=MUTED)
+    yt.append(y); yl.append(lab)
+ax.set_yticks(yt); ax.set_yticklabels(yl, fontsize=9)
+ax.tick_params(axis="y", length=0, pad=42)
 ax.axhline(0.5, color=GRID, lw=1)
-ax.set_xlim(-0.5, 38); ax.set_xticks([0, 5, 10, 15, 20, 25, 30])
-ax.set_xlabel("Share of the attribution that goes to the bank-level indicators (%)")
-ax.grid(axis="x", color=GRID, lw=0.8); ax.set_axisbelow(True)
+ax.set_xlim(0, 108); ax.set_xticks([0, 25, 50, 75, 100])
+ax.set_xlabel("Share of the attribution in the integrated configuration (%)")
 for s in ["top", "right", "left"]:
     ax.spines[s].set_visible(False)
-ax.tick_params(axis="y", length=0)
-handles = [Line2D([0], [0], marker="o", ls="", ms=8, color="#939598", label="Baseline indicator set"),
-           Line2D([0], [0], marker="o", ls="", ms=8, color=COL["micro"], label="Extended indicator set")]
-ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.45, 1.0), ncol=2, frameon=False, fontsize=8)
+handles = [plt.Rectangle((0, 0), 1, 1, color=COL["micro"], label="Bank-level indicators"),
+           plt.Rectangle((0, 0), 1, 1, color=COL["macro"], label="Macroeconomic indicators (baseline set)"),
+           plt.Rectangle((0, 0), 1, 1, facecolor=NEW, hatch="////", edgecolor="white", label="Macroeconomic indicators added in the extended set")]
+ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.42, 1.0), ncol=2, frameon=False, fontsize=7.5)
 fig.tight_layout()
 for ext in ["pdf", "png"]:
     fig.savefig(OUT / f"figC_displacement.{ext}", dpi=200)

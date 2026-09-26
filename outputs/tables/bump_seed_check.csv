@@ -1,0 +1,16 @@
+seed,cls,added_in_top10,rank_credit_gap,rank_credit_g,rank_nfa_gdp,rank_FS.AST.PRVT.GD.ZS,micro_in_base_top10,micro_in_ext_top10,micro_dropped
+42,Tree,4,5,9,3,6,1,0,p_roe
+42,LR,3,10,4,20,7,4,0,"l_assets, p_nim, l_loans, p_roe"
+42,MLP,3,11,2,7,6,2,0,"l_assets, p_nim"
+7,Tree,4,5,9,3,6,1,0,p_roa
+7,LR,3,10,4,20,7,4,0,"l_assets, p_nim, l_loans, p_roe"
+7,MLP,3,12,1,7,6,2,0,"p_nim, l_assets"
+13,Tree,4,5,9,3,6,1,0,p_roe
+13,LR,3,10,4,20,7,4,0,"l_assets, p_nim, l_loans, p_roe"
+13,MLP,3,12,1,7,5,3,0,"p_nim, l_loans, x_loans_gross"
+27,Tree,4,5,9,3,7,1,0,p_roa
+27,LR,3,10,4,20,7,4,0,"l_assets, p_nim, l_loans, p_roe"
+27,MLP,3,11,1,4,6,2,0,"l_assets, l_loans"
+99,Tree,4,5,9,3,7,1,0,p_roa
+99,LR,3,10,4,20,7,4,0,"l_assets, p_nim, l_loans, p_roe"
+99,MLP,4,10,1,5,6,2,0,"l_assets, l_loans"
