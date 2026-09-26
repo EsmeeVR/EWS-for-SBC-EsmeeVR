@@ -104,7 +104,7 @@ for ax, col, title in zip(axes, ["baseline", "extended"], ["Baseline set", "Exte
     ax.axhline(0.5, color=GRID, lw=1)
 axes[0].set_yticks(range(len(MODELS))); axes[0].set_yticklabels([lab for _, lab in MODELS][::-1])
 handles = [plt.Rectangle((0, 0), 1, 1, color=COL["micro"], label="Bank-level (micro) block"),
-           plt.Rectangle((0, 0), 1, 1, color=COL["macro"], label="Country-level (macro) block"),
+           plt.Rectangle((0, 0), 1, 1, color=COL["macro"], label="Macroeconomic (macro) block"),
            Line2D([0], [0], color=INK, lw=1.4, label="Micro share, range over five seeds")]
 fig.legend(handles=handles, loc="upper center", ncol=3, frameon=False, fontsize=7.5, bbox_to_anchor=(0.5, 1.01))
 fig.tight_layout(rect=(0, 0, 1, 0.93))
