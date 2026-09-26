@@ -26,7 +26,10 @@ OUT.mkdir(parents=True, exist_ok=True)
 COL = {"micro": "#0094B3", "macro": "#5B3FC0", "integrated": "#C05E00"}
 MARK = {"micro": "o", "macro": "s", "integrated": "D"}   # shape as a second cue next to colour
 INK, MUTED, GRID = "#231F20", "#59595B", "#E3E4E6"
-plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 9, "axes.edgecolor": MUTED,
+# Times New Roman to match the manuscript (elsarticle 'times' option; IJF artwork guide lists Times New
+# Roman). pdf.fonttype 42 embeds the font as TrueType, as the guide asks for embedded fonts.
+plt.rcParams.update({"font.family": "Times New Roman", "mathtext.fontset": "stix", "pdf.fonttype": 42,
+                     "font.size": 9, "axes.edgecolor": MUTED,
                      "axes.labelcolor": INK, "xtick.color": MUTED, "ytick.color": INK})
 
 # ---------------------------------------------------------------- Figure A
