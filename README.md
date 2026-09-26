@@ -200,6 +200,29 @@ The baseline is in the `a46_falsification` sheet of each workbook.
 
 ---
 
+## Scoring per country-year (added 26-09-2026)
+
+The crisis label is set per country, but the main comparison scores bank-years, so countries weigh by
+their number of banks. `tools/granularity_all_configs.py` averages the stored bank-level predictions per
+country-year (equal weights) and scores all three configurations, and the country-level macro model, on
+the same 25 countries, for all five seeds. `tools/region_benchmark_testyears.py` adds a region-only rule
+for 2010-2012 and AUROC within Western and within Central and Eastern Europe.
+
+| Mean AUROC, 2010-2012, range over five seeds | Micro | Macro | Integrated | Country model |
+|---|---|---|---|---|
+| Baseline, bank-years | 0.73-0.75 | 0.64-0.67 | 0.66-0.68 | |
+| Baseline, country-years | 0.87-0.88 | 0.69-0.71 | 0.70-0.73 | 0.65-0.67 |
+| Extended, bank-years | 0.71-0.72 | 0.73-0.75 | 0.74-0.76 | |
+| Extended, country-years | 0.85-0.86 | 0.74-0.76 | 0.76-0.78 | 0.68-0.69 |
+
+Micro > integrated > macro per country-year in both sets and all seeds, also without LR; the region rule
+reaches 0.617. Read it as recognition of countries in an ongoing crisis (A29), not as early warning.
+Both scripts only read committed outputs plus `outputs/tables/panel_index_{base,robust}.parquet`, the
+country and year of every panel row (no bank identifier), so they run without the licensed ORBIS data.
+Figures for the paper: `tools/paper_figures.py` -> `outputs/figures/paper/`.
+
+---
+
 ## Disclosures
 
 **Threshold metrics are calibrated out of sample, and are sometimes absent.** The alarm cut-off for
