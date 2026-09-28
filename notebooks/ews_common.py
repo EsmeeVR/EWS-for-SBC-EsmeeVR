@@ -569,57 +569,6 @@ def run_expanding_window(splits, feature_sets, feature_sets_lr, variants, target
     return results, best_params_log, proba_store, fi_store
 
 
-def run_tranquil_years(splits, feature_sets, feature_sets_lr, variants, target, country_col, proba_store,
-                       n_trials=50, model_names=MODEL_NAMES):
-    """A35 (separate analysis, outside the main results): false alarms in years without any crisis.
-
-    Test years without crisis observations are skipped by the main loop because AUROC needs both
-    classes. An early warning system is still judged on those years: every alarm there is false.
-    Each tranquil year gets a model fitted exactly as in the main loop (tuning, skip rule, RT1 filter),
-    and alarms are counted with a cut-off fixed in advance: the F1-optimal cut-off on the most recent
-    evaluated year's out-of-sample predictions in proba_store (2012 for 2013). After the first tranquil
-    year there is no newer year with crises to recalibrate on, so that cut-off is carried forward.
-
-    Returns a DataFrame with one row per model x variant x dataset x tranquil year.
-    """
-    rows = []
-    for variant_name, use_rt1 in variants:
-        for dataset_name, feat_cols in feature_sets.items():
-            lr_cols = feature_sets_lr[dataset_name]
-            for (train_full, test) in splits:
-                test_year = test['year'].values[0]
-                if test[target].sum() > 0:
-                    continue  # evaluated in the main loop
-                w = prepare_window(train_full, use_rt1, country_col, target)
-                if w is None:
-                    continue
-                for model_name in model_names:
-                    cols = lr_cols if model_name == 'logistic_regression' else feat_cols
-                    evaluated = sorted(y for (m, d, y, v) in proba_store
-                                       if m == model_name and d == dataset_name and v == variant_name and y < test_year)
-                    if not evaluated:
-                        continue
-                    last_year = evaluated[-1]
-                    y_true_prev, y_proba_prev = proba_store[(model_name, dataset_name, last_year, variant_name)]
-                    threshold = f1_optimal_threshold(y_true_prev, y_proba_prev)
-                    if np.isnan(threshold):
-                        continue
-                    best_params = tune_params(model_name, w, cols, n_trials)
-                    model, X_train_final, X_test_final, sw = outer_model(model_name, best_params, w, test, cols)
-                    fit_kwargs = {'sample_weight': sw} if sw is not None else {}
-                    model.fit(X_train_final, w['y_train'], **fit_kwargs)
-                    y_proba = model.predict_proba(X_test_final)[:, 1]
-                    alarms = int((y_proba >= threshold).sum())
-                    rows.append({
-                        'model': model_name, 'variant': variant_name, 'dataset': dataset_name,
-                        'test_year': test_year, 'threshold': threshold, 'threshold_from_year': last_year,
-                        'n_obs': len(y_proba), 'n_alarms': alarms, 'false_alarm_rate': alarms / len(y_proba),
-                        'mean_proba': float(np.mean(y_proba)), 'tuned': bool(best_params),
-                    })
-                print(f"  tranquil {variant_name}/{dataset_name}/{test_year}: done")
-    return pd.DataFrame(rows)
-
-
 def _auroc_ranks(y_true, y_score):
     """AUROC from ranks (Mann-Whitney), fast enough to call thousands of times per comparison."""
     ranks = scipy_stats.rankdata(y_score)
