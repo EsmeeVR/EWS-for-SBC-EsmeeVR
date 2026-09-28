@@ -4,7 +4,7 @@ Replication code and results for *The effect of integrating micro- and macro-lev
 performance of Early Warning Systems for systemic banking crises* (MSc thesis, University of Twente,
 2026), and for the journal article based on it.
 
-**Research question.** How does integrating micro- and macro-level indicators affect the predictive
+**Research question**. How does integrating micro- and macro-level indicators affect the predictive
 performance of Early Warning Systems for systemic banking crises?
 
 The study builds a bank-year panel of EU banks across 25 countries, attaches country-level
@@ -70,8 +70,7 @@ number here and flatter the result. Including them, the headline 0.54% becomes 0
 | Largest | 21.5% | 36.7% |
 
 Seed 42 runs above the five-seed mean in 68 of 168 cells, by **+1.93%** on average, and below it in
-72, by **-2.21%** on average. 71% of cells sit within 2% of the mean. Reporting seed 42 therefore
-stays inside the 2% tolerance agreed with the supervisors at the level the claims are made.
+72, by **-2.21%** on average. 71% of cells sit within 2% of the mean.
 
 Almost all of the variation sits in three model classes:
 
@@ -108,7 +107,6 @@ pip install -r requirements.txt
 python tools/run_pipeline.py            # every step in dependency order
 python tools/run_pipeline.py --dry-run  # list the steps, run nothing
 python tools/run_pipeline.py --from 13a # resume at a step
-python tools/run_pipeline.py --tranquil # the separate tranquil-years job, after the main run
 ```
 
 `run_pipeline.py` checks that the notebook kernel has the pinned pandas and scikit-learn, stops at
@@ -284,14 +282,35 @@ a `KNOWN ISSUE` comment.
 
 ---
 
+## AI assistance in code development
+
+Claude (Anthropic), used through Claude Code with read and write access to this repository, assisted
+in developing the code here. Its use covered three kinds of task:
+
+1. **Auxiliary scripts** in `tools/` that read the stored estimation output and produce the reported
+   tables, figures and the Online Supplement: the five-seed aggregation, the Reinhart & Rogoff panel rebuild, the per-country-year scoring and the paper figures.
+2. **The leave-one-country-out pre-crisis check** (`tools/precrisis_loco.py`,
+   `tools/precrisis_evaluate.py`), written to the decision rule in [PRECRISIS.md](PRECRISIS.md),
+   which was committed before any of this code existed.
+3. **A review of the estimation pipeline**, which found the errors listed in [AUDIT.md](AUDIT.md).
+   The corrections and their measured effect on the reported values are documented there and in the
+   section *Read this first* above.
+
+The estimation pipeline in `notebooks/` was written by the author; the corrections listed in
+AUDIT.md were made in it with Claude's assistance. Decisions on design, indicators,
+crisis definition, evaluation and what counts as a result were made by the author. All code was run
+by the author, and its output was checked against the stored results before any value was reported.
+Every commit in this repository is marked `Co-Authored-By: Claude`.
+
+---
+
 ## Repository layout
 
 ```
 notebooks/     the pipeline, in dependency order, plus ews_common.py
-tools/         run_pipeline.py, compare_runs.py, aggregate_seeds.py, tranquil_years.py
+tools/         run_pipeline.py, compare_runs.py, aggregate_seeds.py
 data/          inputs; the micro tree is gitignored, see DATA.md
 outputs/       figures, tables, result stores, attribution, seeds, compare, run_logs
-archive/       superseded work, kept for provenance, not part of the pipeline
 ```
 
 Notebook outputs are stripped before commit: committed notebooks carry code only, and everything

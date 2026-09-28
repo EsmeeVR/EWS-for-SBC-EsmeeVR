@@ -10,7 +10,6 @@ The run stops at the first failure; --from resumes there.
     python tools/run_pipeline.py --from 13a           # resume at a step
     python tools/run_pipeline.py --only 14 15 16      # selected steps
     python tools/run_pipeline.py --dry-run            # list the steps, run nothing
-    python tools/run_pipeline.py --tranquil           # the separate A35 job (after the main run)
 
 Run it with the Python that has the pinned requirements. Before anything runs, a probe cell checks
 that the notebook kernel sees the pinned pandas and scikit-learn versions, because a kernel from
@@ -104,7 +103,6 @@ def main() -> int:
     ap.add_argument("--only", nargs="+", help="run only these step keys")
     ap.add_argument("--timeout", type=int, default=6 * 3600, help="seconds per notebook cell (default 6 h)")
     ap.add_argument("--dry-run", action="store_true")
-    ap.add_argument("--tranquil", action="store_true", help="run the separate A35 tranquil-years job instead")
     args = ap.parse_args()
 
     if sys.platform == "win32":
@@ -124,7 +122,7 @@ def main() -> int:
         steps = STEPS[keys.index(args.start):]
 
     if args.dry_run:
-        for k, name in (steps if not args.tranquil else [("tranquil", "tools/tranquil_years.py")]):
+        for k, name in steps:
             print(f"{k:>9}  {name}")
         return 0
 
@@ -132,13 +130,6 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     logfile = out_dir / "run.log"
     check_kernel()
-
-    if args.tranquil:
-        t0 = time.time()
-        log(logfile, "START tranquil years (A35)")
-        rc = subprocess.run([sys.executable, str(ROOT / "tools" / "tranquil_years.py")], cwd=ROOT).returncode
-        log(logfile, f"{'DONE' if rc == 0 else 'FAILED'} tranquil years in {(time.time() - t0) / 60:.1f} min")
-        return rc
 
     t_all = time.time()
     for key, name in steps:
