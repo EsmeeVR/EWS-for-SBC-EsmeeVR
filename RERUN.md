@@ -11,7 +11,6 @@ From the repository root, with the Python that has the pinned `requirements.txt`
 
 ```bash
 python tools/run_pipeline.py                 # 01 -> 16 in order; about 2-3 hours
-python tools/run_pipeline.py --tranquil      # separate A35 job, after the main run; about 1 hour
 python tools/compare_runs.py --old audit-2026-09 --label all-fixes
 ```
 
