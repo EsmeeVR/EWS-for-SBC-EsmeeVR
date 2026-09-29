@@ -5,7 +5,7 @@ licensed and is not.
 
 | Source | Level | Coverage | In this repo |
 |---|---|---|---|
-| ORBIS / Bankscope (Bureau van Dijk) | Bank-year | 636 EU banks, 1996-2017 | **No**, licensed |
+| ORBIS / Bankscope (Bureau van Dijk) | Bank-year | 497 EU banks, 2004-2017 (extract: 636 entities, 1996-2017) | **No**, licensed |
 | IMF WEO, IMF IFS, World Bank WDI, BIS | Country-year | 25 EU countries, 1995-2017 | Yes |
 | Laeven & Valencia (2026) systemic banking crises database | Country-year | 1970-2025 | Yes |
 
@@ -56,8 +56,7 @@ Export settings:
 - Values in **millions of EUR**
 - Consolidation code included as an identifier column
 
-NACE 641 is broader than "banks": see [Sample composition](#sample-composition-non-banks-in-the-extract)
-below.
+NACE 641 is broader than "banks": see [Sample composition](#sample-composition) below.
 
 Identifier columns requested:
 
@@ -93,54 +92,25 @@ throughout the code is committed at `data/micro/dictionaries/variable_names_micr
 Note that `cr_impchg` is **impairment charges**, a level in EUR, not a change. The `chg` is short
 for charges. Being an unscaled flow it scales with bank size.
 
-### Sample composition: non-banks in the extract
+### Sample composition
 
-The NACE filter is not as tight as intended. Code 641 covers both **6411 Central banking** and
+The NACE 641 search is broader than "banks". Code 641 covers both **6411 Central banking** and
 **6419 Other monetary intermediation**, and ORBIS assigns 6411 to a number of Irish companies that
-are not banks. The problem was found after the thesis results were produced (checked 17-09-2026).
+are not banks (holding companies, a timber firm, a garage group) and to two central banks. Of the
+636 entities, 598 carry code 6419, 36 carry 6411 and one each carries 4618 and 6410.
 
-**Corrected for the 2026 rerun** (`01_micro_construction.ipynb`, section 4b): the pipeline now keeps
-NACE 6419 only, drops entities that report none of the five core balance-sheet items (deposits, gross
-loans, equity, interbank liabilities, net interest income) in any year, and drops six group entities
-whose operating bank is also in the extract. That removes 84 of the 579 entities with data (4,683 to
-4,405 bank-years). The variable selection is kept as published. The description below is of the
-extract as used for the thesis results; see `RERUN.md` for what the rerun changes.
+Section 4b of `01_micro_construction.ipynb` therefore corrects the sample before any statistic is
+computed. Of the 636 entities, 579 report data; the pipeline keeps those coded 6419 (543), drops
+entities that report none of the five core balance-sheet items (customer deposits, gross loans,
+equity, interbank liabilities, net interest income) in any year, and drops six group entities whose
+operating bank is also in the extract, so the same balance sheet is not counted twice. That leaves
+**497 banks and 4,405 bank-years over 2004-2017** (from 579 entities and 4,683 bank-years). The
+notebook prints "84 of 579" removed: two of the 84 IDs (both non-6419) never enter the panel, so 82
+entities are removed from it.
 
-Of the 636 entities, 598 carry code 6419 and 36 carry 6411, with one each on 4618 and 6410.
-**34 of the 36 code-6411 entities are Irish**, so only 18 of the 52 Irish entities are coded 6419.
-The Irish 6411 group is mostly non-bank companies and holding companies (for example Glennon Bros.
-Holdings, Bimeda Holdings, Fitzpatricks Garage Group, Maiden Foods and Logicalis Ireland), plus a
-few foreign banks recorded under an Irish identifier (Aareal Bank AG, HSBC Bank PLC, The Royal Bank
-of Scotland N.V., Bankinter SA, Citco Bank Nederland NV). Outside Ireland the four non-6419 entities
-are two central banks (Bulgarian National Bank, Banque de France), a sugar trading company and an
-Italian holding company.
-
-These entities have no reported deposits, gross loans, equity, interbank liabilities or net
-interest income in ORBIS (100% missing for the Irish 6411 group), only total assets and profitability.
-The panel imputation (within-bank interpolation, then bank mean, then **year median**) therefore
-fills those lines with the cross-bank median for the year. In the modelling data they look like a
-median bank on the balance-sheet ratios while their total assets are in the tens of millions EUR.
-
-How much of the modelling data they make up. Only years up to 2012 enter any training or test set,
-which removes most of them, and all four non-6419 entities outside Ireland (their data start in 2014):
-
-| Panel | Irish 6411 rows (≤2012) | Crisis observations | Crisis observations in test years |
-|---|---|---|---|
-| Lag-1 (`11a`, `11b`) | 18 of 1,997 | 13 of 727 (1.8%) | 6 of 252 (2.4%) |
-| Lag-2 (`11c`, `11d`) | 12 of 1,616 | 10 of 687 (1.5%) | 4 of 230 (1.7%) |
-
-The 18 lag-1 rows belong to six entities, one of which (Aareal Bank AG) is a bank; the other five
-are non-banks. Every Irish observation in the 2010-2012 test years is a crisis observation, because
-the Laeven and Valencia Irish episode covers those years. The share is small, but it is concentrated
-in the positive class.
-
-The table covers `11a`-`11d`, where the rows enter all three configurations (the macro-only
-configuration there is also estimated on bank-year rows). `rt2a` and `rt2b` read the same panels and
-include the same entities; their counts are not tabulated. The country-level notebooks
-(`12a`/`12b`, macro-only and granularity) read no bank data and are not affected.
-
-Anyone rebuilding the extract can keep the NACE 641 search: the filter in section 4b of
-`01_micro_construction.ipynb` applies the corrections. Check the remaining entities by name.
+The thesis results were produced on the uncorrected sample; how much the non-banks weighed there is
+recorded in `AUDIT.md` (A2, A16, A17). Anyone rebuilding the extract can keep the NACE 641 search,
+as section 4b applies the corrections. Check the remaining entities by name.
 
 ---
 

@@ -32,7 +32,7 @@ Estimate: modelling under an hour, attribution 1 to 1.5 hours, aggregation a few
 |---|---|
 | `22e066b` prep | compare tool; verified AUDIT.md; README disclosure; WDI GDP (current LCU) sheet for A24 |
 | `8f74058` shared module | A9 (verified: refits reproduce the published AUROC and AUPRC exactly, 11a/11b 54/54 baseline and 36/36 rt1, 12a and 12a_gran all cells) |
-| `c6eb9cd` data | A2, A16, A17 (84 of 579 entities removed), A7/A45, A25, A24 (`nfa_gdp` replaces `nfa_g`), A23 (`credit_gap_missing`), A31, A32; A18 checked, not applied |
+| `c6eb9cd` data | A2, A16, A17 (82 of 579 entities removed; the notebook prints 84, two of which never enter the panel), A7/A45, A25, A24 (`nfa_gdp` replaces `nfa_g`), A23 (`credit_gap_missing`), A31, A32; A18 checked, not applied |
 | `ab7ff9e` modelling | A1 (cut-off from the previous year's out-of-sample predictions, calibration window one training year shorter, never reported), A39, A37, A12, A11, A38, A40; A35 as a separate job |
 | `1c53466` attribution, aggregation, inference | A4, A3, A6/A51, A50, A52, A33 (country-cluster bootstrap + Holm), A56, A57, A10, A39 (Brier not reported), A55, A54, A53, A44, A42, A58 |
 | `ae12a4d` runner | `tools/run_pipeline.py`; three fixes found by a smoke run of 14-16 (NB14 output folder, repository-root paths in NB14/15, R&R cells skip when the vault folder is absent) |
