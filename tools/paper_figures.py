@@ -2,7 +2,7 @@
 Figures for Section 5 of the IJF paper (drafts, 25-09-2026).
 
 Figure A  Mean AUROC per configuration across specifications, test years 2011-2012 (the years every
-          specification shares). Dot = reported seed (42), line = range over the five seeds.
+          specification shares). Dot = reported seed (42), bar = five-seed mean, line = range over the five seeds.
           Same numbers as the robustness table, so the two can be compared side by side.
 Figure B  Share of SHAP attribution taken by the bank-level block, per model, in the integrated
           configuration (baseline and extended set, lag 1). Bar = seed 42, whisker = five-seed range.
@@ -61,9 +61,11 @@ for i, (spec, variant, label) in enumerate(SPECS):
     for cfg in ["micro", "macro", "integrated"]:
         g = A[(A.spec == spec) & (A.variant == variant) & (A.config == cfg)]
         lo, hi, v42 = g.auroc.min(), g.auroc.max(), g[g.seed == 42].auroc.iloc[0]
+        mean5 = g.auroc.mean()
         yy = y + offs[cfg]
         ax.plot([lo, hi], [yy, yy], color=COL[cfg], lw=2, solid_capstyle="round", zorder=2)
         ax.plot(v42, yy, MARK[cfg], color=COL[cfg], ms=6.5, mec="white", mew=1.2, zorder=3)
+        ax.plot(mean5, yy, "|", color=INK, ms=9, mew=1.4, zorder=4)   # five-seed mean
 ax.set_yticks([y for y, _ in ylabels]); ax.set_yticklabels([l for _, l in ylabels])
 ax.axhline(3.2 - 0.6 + 0.1, color=GRID, lw=1)
 ax.set_xlabel("Mean AUROC over the six models (test years 2011-2012)")
@@ -74,7 +76,8 @@ ax.tick_params(axis="y", length=0)
 handles = [Line2D([0], [0], marker=MARK[c], color=COL[c], lw=2, ms=6.5, mec="white", label=c.capitalize())
            for c in ["micro", "macro", "integrated"]]
 ax.legend(handles=handles, loc="lower center", bbox_to_anchor=(0.4, 1.0), ncol=3, frameon=False)
-fig.text(0.01, 0.005, "Dot: reported seed (42). Line: range over the five seeds.", color=MUTED, fontsize=7.5)
+fig.text(0.01, 0.005, "Dot: reported seed (42). Black bar: mean over the five seeds. Line: range over the five seeds.",
+         color=MUTED, fontsize=7.5)
 fig.tight_layout()
 for ext in ["pdf", "png"]:
     fig.savefig(OUT / f"figA_auroc_across_specs.{ext}", dpi=200)
