@@ -26,8 +26,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 NOTEBOOKS = ROOT / "notebooks"
 
-# Dependency order. rt2a/rt2b are left out on purpose: the pre-crisis relabelling is invalid as
-# designed (audit A46) and is not rerun until it is redesigned.
+# Dependency order. rt2a/rt2b run before 14/15, which read their results. The pre-crisis
+# relabelling is still invalid as an anticipation test (audit A46); it is rerun so that every
+# number in the paper comes from one sample and one code version, and each notebook now reports
+# the A46 falsification baseline next to its own scores so the result is read as a negative one.
 STEPS = [
     ("01", "01_micro_construction"),
     ("02", "02_macro_construction"),
@@ -51,6 +53,13 @@ STEPS = [
     ("14", "14_visualisations"),
     ("15", "15_results"),
     ("16", "16_descriptive_statistics"),
+    # Crisis-definition check (Reinhart & Rogoff against L&V on the same rows). Nothing downstream reads
+    # it. The panel step is a script, rebuilt every time so the check can never run on a stale sample.
+    ("rr_panels", "tools/build_rr_panels.py"),
+    ("rr11a_RR", "rr_11a_RR"),
+    ("rr11a_LViso", "rr_11a_LViso"),
+    ("rr11b_RR", "rr_11b_RR"),
+    ("rr11b_LViso", "rr_11b_LViso"),
 ]
 PINNED = {"pandas": "3.0.2", "sklearn": "1.8.0"}
 
@@ -127,7 +136,10 @@ def main() -> int:
         t0 = time.time()
         log(logfile, f"START {key} {name}")
         try:
-            run_notebook(name, out_dir, args.timeout)
+            if name.endswith(".py"):
+                subprocess.run([sys.executable, str(ROOT / name)], cwd=ROOT, check=True)
+            else:
+                run_notebook(name, out_dir, args.timeout)
         except Exception as exc:  # noqa: BLE001 - log whatever stopped the notebook, then stop the run
             first = str(exc).strip().splitlines()[-1] if str(exc).strip() else type(exc).__name__
             log(logfile, f"FAILED {key} after {(time.time() - t0) / 60:.1f} min: {first}")
